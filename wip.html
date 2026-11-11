@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>gambling ducks (work in progress)</title>
+  <script src="https://cdn.jsdelivr.net/gh/netizenorg/netnet-standard-library@1.0.1/build/nn.min.js"></script>
+  <script src="https://unpkg.com/kaplay@3001.0.19/dist/kaplay.js"></script>
+</head>
+<body>
+<script>
+  // make the canvas (wider so everything fits)
+  kaplay({ width: 900, height: 480, background: [27, 27, 47], crisp: true });
+
+  // load the files from the repo
+  loadSprite("box", "blind_boxes/box1.png");
+  loadSprite("card", "blind_boxes/card1.png");
+  loadSprite("pack", "tcg-packs/spacePack.png");
+  loadSound("casino", "sounds/casino_ambiance.mp3");
+
+  // draw the box, the pack and the card
+  add([sprite("box"), pos(180, 230), anchor("center"), scale(2)]);
+  add([sprite("pack"), pos(450, 230), anchor("center"), scale(0.45)]);
+  add([sprite("card"), pos(720, 230), anchor("center"), scale(2)]);
+
+  // the start/stop button
+  const button = add([
+    rect(180, 46),
+    pos(450, 430),
+    anchor("center"),
+    color(70, 160, 90),
+    area(),
+  ]);
+
+  const label = add([
+    text("Start music", { size: 20 }),
+    pos(450, 430),
+    anchor("center"),
+  ]);
+
+  let music = null;
+
+  button.onClick(() => {
+    if (music) {
+      music.stop();
+      music = null;
+      label.text = "Start music";
+    } else {
+      music = play("casino", { loop: true });
+      label.text = "Stop music";
+    }
+  });
+</script>
+</body>
+</html>
