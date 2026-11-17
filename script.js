@@ -37,6 +37,11 @@ loadSprite("gacha-machine", "tcg-packs/tcgMachine.png");
 loadSprite("claw-machine", "tcg-packs/tcgMachine.png");
 loadSprite("coin-machine", "tcg-packs/tcgMachine.png");
 
+// loading tcg machine assets
+loadSprite("capsules", "tcg-packs/tcgCapsules.png");
+loadSprite("basic-machine", "tcg-packs/tcgMachineBasic.png");
+loadSprite("twist", "tcg-packs/tcgTwist.png");
+
 // Loading audio assests
 loadSound("bgm", "sounds/casino_ambiance.mp3");
 
