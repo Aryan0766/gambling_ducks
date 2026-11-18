@@ -21,6 +21,11 @@ kaplay({
       keyboard: ["enter"],
       gamepad: ["east"],
     },
+    
+    back: {
+  keyboard: ["escape"],
+  gamepad: ["west"],
+    },
   },
 
   // Background Setup
@@ -32,15 +37,22 @@ kaplay({
 // Global Variables
 let chaseCard = 0.05;
 
+const tileSize = 32;
+const duckmanSpeed = 140;
+
 // Loading game assets
 loadSprite("gacha-machine", "tcg-packs/tcgMachine.png");
 loadSprite("claw-machine", "tcg-packs/tcgMachine.png");
-loadSprite("coin-machine", "tcg-packs/tcgMachine.png");
+
+loadSprite("duckman-machine", "tcg-packs/tcgMachine.png");
 
 // Loading claw machince assets
 loadSprite("claw_bg", "blind_boxes/claw_machine.png");
 loadSprite("claw", "blind_boxes/claw_sheet.png", {sliceX: 2});
 loadSprite("claw_box", "blind_boxes/claw_box.png");
+
+//loading duckman asssets
+loadSprite("duckman_bg", "duckman/duckman.png");
 
 // loading tcg machine assets
 loadSprite("capsules", "tcg-packs/tcgCapsules.png");
@@ -68,7 +80,8 @@ scene("arcade-scene", () => {
   const games = [
     {sprite: "gacha-machine", scene: "tcg-gacha-scene"},
     {sprite: "claw-machine", scene: "claw-machine-scene"},
-    {sprite: "coin-machine", scene: "coin-machine-scene"},
+    
+    {sprite: "duckman-machine", scene: "duckman-machine-scene"},
   ];
   
   // Calculated the x-coord to center machines
@@ -169,8 +182,37 @@ scene("claw-machine-scene", () => {
   onButtonPress("back", () => go("arcade-scene"));
 });
 
-// Coin Machine Scene
-scene("coin-machine-scene", () =>{
+// duckman Machine Scene
+scene("duckman-machine-scene", () =>{
+  // duckman machine background
+  add([
+    sprite("duckman_bg"),
+    pos(center()),
+    anchor("center"),
+    scale(0.8)]);
+  //score
+      let score = 0;
+  //map layout
+ // '#' = Wall, '.' = Pellet, 'P' = Pac-Man, 'G' = Ghost
+    const mapLayout = [
+        "######################",
+        "#P.........#........G#",
+        "#.###.#.......##.###.#",
+        "#....................#",
+        "#.##....#.#.#.##..#.#",
+        "#...........#.#.....#",
+        "#####.#.#.##......###",
+        "#...................#",
+        "#####.#.#.#.#.....###",
+        "#........#....#.....#",
+        "#.#.##.#.#.#.....##.#",
+        "#...................#",
+        "#.###....##.#...###.#",
+        "#G.................G#",
+        "#####################",
+    ];
+  
+  onButtonPress("back", () => go("arcade-scene"));
   
 });
 
