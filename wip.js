@@ -6,6 +6,7 @@ function startGame () {
   kaplay({
     width: 900,
     height: 540,
+    letterbox: true,
     background: [20, 10, 40],
     crisp: true,
     font: "'Press Start 2P', monospace",
