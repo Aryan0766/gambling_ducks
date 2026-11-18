@@ -1,4 +1,4 @@
- kaplay({
+kaplay({
   // Button Setup
   buttons: {
     moveUp: {
@@ -158,9 +158,10 @@ scene("claw-machine-scene", () => {
     scale(0.9),
     area(),
   ]);
-  
+  // clae moves left or right
   onButtonDown("moveLeft", () => claw.move(-SPEED, 0));
   onButtonDown("moveRight", () => claw.move(SPEED, 0));
+  // limits claw to left and right wall of machine
   onUpdate(() => {
     claw.pos.x = clamp(claw.pos.x, LEFT_WALL, RIGHT_WALL);
   });
@@ -174,4 +175,4 @@ scene("coin-machine-scene", () =>{
 });
 
 // Starts game at arcade lobby
-go("arcade-scene"); 
+go("arcade-scene");
