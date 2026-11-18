@@ -31,6 +31,9 @@ function startGame () {
   loadSprite("common1", "tcg-packs/common1.png");
   loadSprite("uncommon1", "tcg-packs/uncommon1.png");
 
+  //load duckman assets
+  loadSprite("duckman-machine", "tcg-packs/tcgMachine.png");
+  loadSprite("duckman_bg", "duckman/duckman.png");
 
   // the slot symbols sheet: 5 pictures in one row (duck, gem, bow, coin, egg)
   loadSprite("symbols", "ducks/symbols.png", {
@@ -337,8 +340,8 @@ function startGame () {
     const slotMachine = makeCabinet(130, "DUCK SLOTS", null, 0, rgb(40, 30, 100), () => go("slots"), "777");
     const tcgMachine = makeCabinet(340, "TCG Gacha", null, 0, rgb(50, 50, 60), () => go("tcg-gacha-scene"), "TCG");
     const clawMachine = makeCabinet(550, "Claw Machine", null, 0, rgb(50, 50, 60), () => go("claw-machine-scene"), "Claw");
-    makeCabinet(760, "COMING SOON", null, 0, rgb(50, 50, 60), null);
-    const machines = [slotMachine, tcgMachine, clawMachine];
+    const duckman = makeCabinet(760, "DUCK MAN", null, 0, rgb(50, 50, 60), () => go("duckman-machine-scene"), "duckman");
+    const machines = [slotMachine, tcgMachine, clawMachine, duckman];
 
     // the duck + the message that pops up when it is next to a machine
     const duck = makeDuck(450, 505);
@@ -650,6 +653,40 @@ function startGame () {
     onButtonPress("back", () => go("arcade-scene"));
   });
 
+// duckman Machine Scene
+scene("duckman-machine-scene", () =>{
+  // duckman machine background
+  add([
+    sprite("duckman_bg"),
+    pos(center()),
+    anchor("center"),
+    scale(0.9)]);
+  //score
+      let score = 0;
+  //map layout
+ // '#' = Wall, '.' = Pellet, 'P' = Pac-Man, 'G' = Ghost
+    const mapLayout = [
+        "######################",
+        "#P.........#........G#",
+        "#.###.#.......##.###.#",
+        "#....................#",
+        "#.##...........#..#.#",
+        "#...........#.#.....#",
+        "#####.#.#.##......###",
+        "#...................#",
+        "#####.#.#.#.#.....###",
+        "#........#....#.....#",
+        "#.#.##.#.#.#.....##.#",
+        "#...................#",
+        "#.###....##.#...###.#",
+        "#G.................G#",
+        "#####################",
+    ];
+  
+  onButtonPress("back", () => go("arcade-scene"));
+  
+});
 
+  
   go("start");
 }
