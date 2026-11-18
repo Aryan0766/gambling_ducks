@@ -8,7 +8,14 @@ function startGame () {
     height: 540,
     background: [20, 10, 40],
     crisp: true,
-    font: "'Press Start 2P', monospace"
+    font: "'Press Start 2P', monospace",
+    buttons: {
+      moveDown: { keyboard: ["down", "s"], gamepad: ["dpad-down"]},
+      moveLeft: { keyboard: ["left", "a"], gamepad: ["dpad-left"]},
+      moveRight: { keyboard: ["right", "d"], gamepad: ["dpad-right"]},
+      enter: { keyboard: ["enter", "space"], gamepad: ["east"]},
+      back: { keyboard: ["escape", "a"], gamepad: ["south"]}
+    }
   });
 
   // load the files from the repo
@@ -17,6 +24,7 @@ function startGame () {
   loadSprite("pack", "tcg-packs/spacePack.png");
   loadSound("casino", "sounds/casino_ambiance.mp3");
   loadSound("rip", "sounds/rippingSound.mp3");
+  loadSound("shake","sounds/shakingSound.mp3");
   
   // Loading claw machince assets
   loadSprite("gacha-machine", "tcg-packs/tcgMachine.png");
@@ -25,6 +33,7 @@ function startGame () {
   loadSprite("claw_box", "blind_boxes/claw_box.png");
 
   // loading tcg machine assets
+  loadSprite("spacePack", "tcg-packs/spacePack.png");
   loadSprite("capsules", "tcg-packs/tcgCapsules.png");
   loadSprite("basic-machine", "tcg-packs/tcgMachineBasic.png");
   loadSprite("twist", "tcg-packs/tcgTwist.png");
@@ -549,7 +558,7 @@ function startGame () {
       sprite("basic-machine"),
       pos(center()),
       anchor("center"),
-      scale(2.4),
+      scale(1.7),
     ]);
   
     const capsules = machine.add([
@@ -597,7 +606,7 @@ function startGame () {
             sprite("spacePack"),
             pos(center()),
             anchor("center"),
-            scale(1.2),
+            scale(0.8),
             z(10),
           ]);
         }
@@ -608,25 +617,25 @@ function startGame () {
 
   // Claw Machine Scene
   scene("claw-machine-scene", () => {
-    const TOP = 200; // where the claw is hanging
-    const FLOOR = 467; // bottom of the glass in the machine
-    const LEFT_WALL = 243; // furthest left the claw can go
-    const RIGHT_WALL = 557; // furthest right the claw can go
-    const SPEED = 250; // speed of claw moving
+    const TOP = 137; // where the claw is hanging
+    const FLOOR = 315; // bottom of the glass in the machine
+    const LEFT_WALL = 345; // furthest left the claw can go
+    const RIGHT_WALL = 555; // furthest right the claw can go
+    const SPEED = 170; // speed of claw moving
     // claw machine background
     add([
       sprite("claw_bg"),
       pos(center()),
       anchor("center"),
-      scale(0.9)
+      scale(0.6)
     ]);
     // rand placement of blind boxes
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 13; i++) {
       add([
       sprite("claw_box"),
-      pos(rand(300, 560), FLOOR - rand(0,40)),
+      pos(rand(383, 557), FLOOR - rand(0,27)),
       anchor("bot"),
-      scale(0.9),
+      scale(0.6),
       area(),
       "box"
     ]);
@@ -636,7 +645,7 @@ function startGame () {
       sprite("claw", {frame: 0}),
       pos(400, TOP),
       anchor("top"),
-      scale(0.9),
+      scale(0.6),
       area(),
     ]);
     // clae moves left or right
