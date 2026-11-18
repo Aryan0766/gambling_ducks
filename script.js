@@ -43,10 +43,12 @@ loadSprite("basic-machine", "tcg-packs/tcgMachineBasic.png");
 loadSprite("twist", "tcg-packs/tcgTwist.png");
 loadSprite("common1", "tcg-packs/common1.png");
 loadSprite("uncommon1", "tcg-packs/uncommon1.png");
+loadSprite("spacePack", "tcg-packs/spacePack.png");
 
 // Loading audio assests
 loadSound("bgm", "sounds/casino_ambiance.mp3");
 loadSound("rip", "sounds/rippingSound.mp3");
+loadSound("shake", "sounds/shakingSound.mp3");
 
 // Arcade Scene
 scene("arcade-scene", () => {
@@ -117,6 +119,68 @@ scene("arcade-scene", () => {
 
 // TCG Gacha Scene
 scene("tcg-gacha-scene", () => {
+  let isTwist = false;
+  let isOpen = false;
+  
+  const machine = add([
+    sprite("basic-machine"),
+    pos(center()),
+    anchor("center"),
+    scale(2.4),
+  ]);
+  
+  const capsules = machine.add([
+    sprite("capsules"),
+    pos(),
+    anchor("center"),
+  ]);
+  
+  const twist = machine.add([
+    sprite("twist"),
+    pos(0,0),
+    //rotate(),
+    anchor("center"),
+  ]);
+  
+  // Player presses enter to insert coin
+  onButtonPress("enter", () => {
+    if (isTwist) return;
+    
+    isTwist = true;
+    let timer = 0;
+    const spinTime = 4;
+    
+    // Sounds of the capsules moving in the machine
+    const shake = play("shake", {
+    volume: 0.6,
+    });
+    
+    // Animates machine to show capsule is being fetches
+    const spin = onUpdate(() => {
+      timer += dt();
+      twist.angle += 2;
+      
+      // Makes capsules shake when machine is played
+      capsules.pos = vec2(rand(-2, 2), rand(-2, 2));
+      
+      // Checks if machine is done getting pack and stops animation
+      if(timer >= spinTime){
+        spin.cancel();
+        
+        twist.angle = 0;
+        capsules.pos = vec2(0, 0);
+        
+        const pack = add([
+          sprite("spacePack"),
+          pos(center()),
+          anchor("center"),
+          scale(1.2),
+          z(10),
+        ]);
+      }
+      
+    });  
+  });
   
 });
 
