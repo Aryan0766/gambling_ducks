@@ -713,7 +713,7 @@ function startGame () {
           if (won_boxes > 5 && rand() < 0.03) { // golden duck rand
             prize = "golden_duck";
           }
-          wait(0.6, () => go("box-reveal", prize));
+         // wait(0.6, () => go("box-reveal", prize));
         }
       }
       if (grabbed) {
@@ -729,9 +729,9 @@ function startGame () {
     onButtonPress("back", () => go("lobby"));
   });
 
-scene("blind-box-reveal", () => {
+//scene("blind-box-reveal", () => {
 
-  });
+ // });
   
   go("start");
 }
