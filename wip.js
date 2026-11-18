@@ -6,26 +6,44 @@ function startGame () {
   kaplay({
     width: 900,
     height: 540,
+    letterbox: true,
     background: [20, 10, 40],
     crisp: true,
-    font: "'Press Start 2P', monospace"
+    font: "'Press Start 2P', monospace",
+    buttons: {
+      moveDown: { keyboard: ["down", "s"], gamepad: ["dpad-down"]},
+      moveLeft: { keyboard: ["left", "a"], gamepad: ["dpad-left"]},
+      moveRight: { keyboard: ["right", "d"], gamepad: ["dpad-right"]},
+      enter: { keyboard: ["enter", "space"], gamepad: ["east"]},
+      back: { keyboard: ["escape"], gamepad: ["south"]}
+    }
   });
 
   // load the files from the repo
-  loadSprite("box", "");
-  loadSprite("card", "blind_boxes/card1.png");
   loadSprite("pack", "tcg-packs/spacePack.png");
   loadSound("casino", "sounds/casino_ambiance.mp3");
   loadSound("rip", "sounds/rippingSound.mp3");
+  loadSound("shake","sounds/shakingSound.mp3");
   
-  // Loading claw machince assets
-  loadSprite("gacha-machine", "tcg-packs/tcgMachine.png");
+  // loading claw machine assets
+  loadSprite("blind_box", "blind_boxes/blind_box.png");
   loadSprite("claw_bg", "blind_boxes/claw_machine.png");
   loadSprite("claw", "blind_boxes/claw_sheet.png", {sliceX: 2});
   loadSprite("claw_box", "blind_boxes/claw_box.png");
+  loadSprite("bow", "blind_boxes/bow.png");
+  loadSprite("party_hat", "blind_boxes/party_hat.png");
+  loadSprite("gold_crown", "blind_boxes/gold_crown.png");
+  loadSprite("flower_pin", "blind_boxes/flower_pin.png");
+  loadSprite("sweater", "blind_boxes/sweater.png");
+  loadSprite("cape", "blind_boxes/cape.png");
+  loadSprite("golden_duck", "blind_boxes/golden_duck.png");
+  
+  const SKINS = ["bow", "party_hat", "gold_crown", "flower_pin", "sweater", "cape"];
 
   // loading tcg machine assets
+  loadSprite("spacePack", "tcg-packs/spacePack.png");
   loadSprite("capsules", "tcg-packs/tcgCapsules.png");
+  loadSprite("gacha-machine", "tcg-packs/tcgMachine.png");
   loadSprite("basic-machine", "tcg-packs/tcgMachineBasic.png");
   loadSprite("twist", "tcg-packs/tcgTwist.png");
   loadSprite("common1", "tcg-packs/common1.png");
@@ -35,13 +53,12 @@ function startGame () {
   loadSprite("duckman-machine", "tcg-packs/tcgMachine.png");
   loadSprite("duckman_bg", "duckman/duckman.png");
 
-  // the slot symbols sheet: 5 pictures in one row (duck, gem, bow, coin, egg)
+  // the slot symbols sheet
   loadSprite("symbols", "ducks/symbols.png", {
     sliceX: 5
   });
 
-  // the duck sprite sheet: 6 pictures across, 5 rows down (each picture is 64x64)
-  // each row is one animation: "from" and "to" are picture numbers (counting from 0)
+  // the duck sprite sheet
   loadSprite("duck", "ducks/duck_spritesheet.png", {
     sliceX: 6,
     sliceY: 5,
@@ -80,43 +97,43 @@ function startGame () {
 
 
 
-  // PART 1: SHARED GAME STATE (every screen uses these)
+  // game variables
 
-  let coins = 100; // the player's money
-  let music = null; // the background music (lives outside the scenes so it keeps playing)
+  let coins = 100; // base coins player starts out with
+  let music = null; // bg music
+  let won_boxes = 0; // boxes won from the claw machine
+  let collection = []; // aquired/saved skins
+  let equipped = null; // current skin of the duck
 
 
 
-  // PART 2: SOUND SLOTS
-  // Put a file path between the quotes to turn a sound on.
-  // Leave "" and that sound is just silent (nothing breaks).
+  // sounds
 
   const SOUND_FILES = {
-    gong: "sounds/shinese-gong.mp3", // when you press PLAY
-    spin: "", // loops while the reels spin  
-    reelStop: "", // a little click each time a reel stops
-    win: "sounds/money-soundfx.mp3", // a pair, or 3 of a kind
-    jackpot: "sounds/here-come-the-money-casinoze.mp3", // 3 ducks!
-    lose: "sounds/downer_noise.mp3", // no luck
-    betUp: "", // the bet  +  button
-    betDown: "", // the bet  -  button
+    spin: "", 
+    reelStop: "", 
+    win: "sounds/money-soundfx.mp3", 
+    jackpot: "sounds/here-come-the-money-casinoze.mp3", 
+    lose: "sounds/downer_noise.mp3",
+    betUp: "", 
+    betDown: "", 
   };
 
-  // load every sound that has a file
+  // load all sound files
   for (const name in SOUND_FILES) {
     if (SOUND_FILES[name] !== "") loadSound(name, SOUND_FILES[name]);
   }
 
-  // play a sound by name (does nothing if the slot is empty)
+  // plays a sound by name 
   function playSound (name, options) {
     if (SOUND_FILES[name] === "") return null;
     return play(name, options);
   }
 
 
-  // PART 3: HELPER FUNCTIONS (buttons, signs, machines, the duck)
+  // helper functions
 
-  // a simple button: a colored rectangle with text on top
+  // buttons
   function makeButton (words, x, y, w, h, btnColor, action) {
     const button = add([rect(w, h), pos(x, y), anchor("center"), color(btnColor), area()]);
     const label = add([text(words, {
@@ -126,7 +143,7 @@ function startGame () {
     return label;
   }
 
-  // background music: turn it on / off
+  // bg music can turn it on or off
   function startMusic () {
     if (!music) music = play("casino", {
       loop: true
@@ -140,7 +157,7 @@ function startGame () {
     }
   }
 
-  // the music ON / OFF switch (used on every screen). Click it, or press M.
+  // on off music switch
   function makeMusicSwitch (x, y) {
     add([text("MUSIC", {
       size: 12
@@ -177,7 +194,7 @@ function startGame () {
     refresh();
   }
 
-  // a neon sign: dark box with a glowing outline and text
+  // the neon signs
   function makeSign (words, x, y, signColor) {
     add([rect(230, 50), pos(x, y), anchor("center"), color(20, 10, 40), outline(4, signColor)]);
     add([text(words, {
@@ -185,17 +202,16 @@ function startGame () {
     }), pos(x, y), anchor("center"), color(signColor)]);
   }
 
-  // an arcade machine. spriteName = picture on its screen,
-  // action = what happens when the duck presses SPACE
+  // makes machine in the lobby
   function makeCabinet (x, words, spriteName, spriteScale, bodyColor, action, screenWords = "?") {
-    // body
+    
     add([rect(170, 250), pos(x, 270), anchor("center"), color(bodyColor), outline(4, rgb(255, 80, 200))]);
-    // top sign
+
     add([rect(170, 34), pos(x, 162), anchor("center"), color(20, 10, 40), outline(4, rgb(90, 220, 255))]);
     add([text(words, {
       size: 12
     }), pos(x, 162), anchor("center"), color(90, 220, 255)]);
-    // screen
+
     add([rect(130, 120), pos(x, 255), anchor("center"), color(10, 10, 30), outline(4, rgb(90, 220, 255))]);
     if (spriteName) {
       add([sprite(spriteName), pos(x, 255), anchor("center"), scale(spriteScale)]);
@@ -225,12 +241,7 @@ function startGame () {
   }
 
 
-  // PART 4: SLOT MACHINE DATA + SYMBOLS
-
-  // The rules (kept simple):
-  //   3 ducks  = bet x 25   (JACKPOT)
-  //   3 of anything else  = bet x 5
-  //   any 2 the same  = you get your bet back (x1)
+  // slot machine
 
   const SYMBOLS = ["duck", "gem", "bow", "coin", "egg"];
   const BET_STEPS = [5, 10, 25, 50, 100]; // the bets you can pick
@@ -241,7 +252,7 @@ function startGame () {
     return SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
   }
 
-  // look at the 3 reels: how many times your bet you win, what to say, and which sound to play
+
   function getPayout (reels) {
     const a = reels[0];
     const b = reels[1];
@@ -273,8 +284,7 @@ function startGame () {
     };
   }
 
-  // one reel symbol= one picture from the symbols sheet
-  // (frame number = its place in the SYMBOLS list above)
+  // shows a symbol on the slot reel
   function makeSymbol (name, x, y) {
     return add([sprite("symbols", {
       frame: SYMBOLS.indexOf(name)
@@ -282,7 +292,7 @@ function startGame () {
   }
 
 
-  // SCREEN 1: START PAGE
+  // start screen
 
   scene("start", () => {
     const title = add([text("DUCK CASINO", {
@@ -293,13 +303,11 @@ function startGame () {
     }), pos(450, 125), anchor("center"), color(90, 220, 255)]);
    
 
-    add([sprite("box"), pos(170, 300), anchor("center"), scale(2)]);
+    
     add([sprite("pack"), pos(450, 300), anchor("center"), scale(0.45)]);
-    add([sprite("card"), pos(730, 300), anchor("center"), scale(2)]);
 
     makeButton("PLAY", 450, 490, 200, 50, rgb(236, 64, 160), () => {
-      playSound("gong");
-      startMusic(); // music starts here
+      startMusic(); 
       go("lobby");
     });
     makeMusicSwitch(790, 500);
@@ -307,7 +315,7 @@ function startGame () {
 
 
 
-  // SCREEN 2: THE CASINO FLOOR (walk around!)
+  // lobby
 
   scene("lobby", () => {
     // back wall
@@ -334,21 +342,18 @@ function startGame () {
         add([rect(60, 60), pos(col * 60, 230 + row * 60), color(dark ? rgb(20, 40, 110) : rgb(30, 60, 150))]);
       }
     }
-
-    // the machines: only DUCK SLOTS works so far, the other three are empty spots for new games
-    // (to add a game later: change a "COMING SOON" line to makeCabinet(x, "NAME", null, 0, rgb(40, 30, 100), () => go("scene-name"), "?") and add that machine to the machines list)
+    // machines in the lobby
     const slotMachine = makeCabinet(130, "DUCK SLOTS", null, 0, rgb(40, 30, 100), () => go("slots"), "777");
     const tcgMachine = makeCabinet(340, "TCG Gacha", null, 0, rgb(50, 50, 60), () => go("tcg-gacha-scene"), "TCG");
     const clawMachine = makeCabinet(550, "Claw Machine", null, 0, rgb(50, 50, 60), () => go("claw-machine-scene"), "Claw");
     const duckman = makeCabinet(760, "DUCK MAN", null, 0, rgb(50, 50, 60), () => go("duckman-machine-scene"), "duckman");
     const machines = [slotMachine, tcgMachine, clawMachine, duckman];
 
-    // the duck + the message that pops up when it is next to a machine
+    // msg when duck is at machine
     const duck = makeDuck(450, 505);
-    let facing = "left"; // the sprite sheet duck starts out looking left
+    let facing = "left"; 
     let currentAnim = "idle";
 
-    // switch animation, but only when it is a NEW one (so it doesn't restart every frame)
     function setAnim (name) {
       if (currentAnim === name) return;
       duck.play(name);
@@ -361,7 +366,6 @@ function startGame () {
     let near = null;
 
     onUpdate(() => {
-      // which keys are held?
       let dx = 0;
       let dy = 0;
       if (isKeyDown("left") || isKeyDown("a")) dx = -1;
@@ -369,23 +373,20 @@ function startGame () {
       if (isKeyDown("up") || isKeyDown("w")) dy = -1;
       if (isKeyDown("down") || isKeyDown("s")) dy = 1;
 
-      // move the duck, but keep it on the floor in front of the machines
       duck.pos.x = clamp(duck.pos.x + dx * 200 * dt(), 30, 870);
       duck.pos.y = clamp(duck.pos.y + dy * 200 * dt(), 420, 505);
 
-      // pick the walking animation (the sheet has a left row and a right row)
       if (dx < 0) facing = "left";
       if (dx > 0) facing = "right";
       const moving = dx !== 0 || dy !== 0;
       if (moving) {
         duck.flipX = false;
-        setAnim(facing); // "left" or "right" animation
+        setAnim(facing); // left or right facing animation
       } else {
         setAnim("idle");
         duck.flipX = facing === "right"; // the idle row looks left, so flip it to look right
       }
 
-      // is the duck close to a machine?
       near = null;
       for (const m of machines) {
         if (duck.pos.dist(vec2(m.x, 400)) < 70) near = m;
@@ -402,14 +403,13 @@ function startGame () {
     makeMusicSwitch(790, 520);
   });
 
-  // SCREEN 3: DUCK SLOTS
+  // slots
 
   scene("slots", () => {
     add([text("DUCK SLOTS", {
       size: 28
     }), pos(450, 45), anchor("center"), color(255, 80, 200)]);
 
-    // the machine frame + three reel windows
     add([rect(540, 230), pos(450, 205), anchor("center"), color(30, 20, 80), outline(6, rgb(255, 80, 200))]);
     const reelX = [310, 450, 590];
     const reelY = 205;
@@ -417,11 +417,10 @@ function startGame () {
       add([rect(130, 170), pos(x, reelY), anchor("center"), color(245, 240, 225), outline(4, rgb(90, 220, 255))]);
     }
 
-    // little arrows pointing at the winning line
     add([polygon([vec2(0, -12), vec2(18, 0), vec2(0, 12)]), pos(190, reelY), color(255, 214, 102)]);
     add([polygon([vec2(0, -12), vec2(-18, 0), vec2(0, 12)]), pos(710, reelY), color(255, 214, 102)]);
 
-    // what each reel is showing right now
+    // display of each reel
     const shown = [null, null, null];
 
     function showSymbol (i, name) {
@@ -452,7 +451,7 @@ function startGame () {
     }
     updateHud();
 
-    //bet + and -
+    let spinning = false;
     function changeBet (direction) {
       if (spinning) return;
       const newIndex = clamp(betIndex + direction, 0, BET_STEPS.length - 1);
@@ -462,8 +461,6 @@ function startGame () {
       updateHud();
     }
 
-    //spinning
-    let spinning = false;
     let spinSound = null;
 
     function spin () {
@@ -488,7 +485,6 @@ function startGame () {
       // decide the result first
       const reels = [randomSymbol(), randomSymbol(), randomSymbol()];
 
-      // each reel flickers, then stops on its real symbol (one after the other)
       for (let i = 0; i < 3; i++) {
         const flicker = loop(0.05, () => showSymbol(i, randomSymbol()));
         wait(1 + i * 0.7, () => {
@@ -521,12 +517,12 @@ function startGame () {
         message.text = result.text;
         message.color = rgb(255, 90, 160);
       }
-      playSound(result.sound); // money / jackpot / downer
+      playSound(result.sound); 
 
       // if you are broke, here is a free refill
       if (coins < BET_STEPS[0]) {
-        coins += 50;
-        message.text = "OUT OF COINS! +50 FREE";
+        coins += 20;
+        message.text = "OUT OF COINS! +20 FREE";
       }
       updateHud();
     }
@@ -552,7 +548,7 @@ function startGame () {
       sprite("basic-machine"),
       pos(center()),
       anchor("center"),
-      scale(2.4),
+      scale(1.7),
     ]);
   
     const capsules = machine.add([
@@ -600,7 +596,7 @@ function startGame () {
             sprite("spacePack"),
             pos(center()),
             anchor("center"),
-            scale(1.2),
+            scale(0.8),
             z(10),
           ]);
         }
@@ -611,46 +607,129 @@ function startGame () {
 
   // Claw Machine Scene
   scene("claw-machine-scene", () => {
-    const TOP = 200; // where the claw is hanging
-    const FLOOR = 467; // bottom of the glass in the machine
-    const LEFT_WALL = 243; // furthest left the claw can go
-    const RIGHT_WALL = 557; // furthest right the claw can go
-    const SPEED = 250; // speed of claw moving
+    const TOP = 137; // where the claw is hanging
+    const FLOOR = 315; // bottom of the glass in the machine
+    const LEFT_WALL = 345; // furthest left the claw can go
+    const RIGHT_WALL = 555; // furthest right the claw can go
+    const SPEED = 170; // speed of claw moving
+    const BOTTOM = FLOOR - 47; // lowest the claw goes
+    const CHUTE = 355; // the dropped prize goes here
+    let mode = "move"; // mode of the claw, move, up, down, return, drop and done
+    let grabbed = null; // box being grabbed
+    let dropped = null; // box falling into chute
+    
     // claw machine background
     add([
       sprite("claw_bg"),
       pos(center()),
       anchor("center"),
-      scale(0.9)
+      scale(0.6)
     ]);
     // rand placement of blind boxes
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 13; i++) {
       add([
       sprite("claw_box"),
-      pos(rand(300, 560), FLOOR - rand(0,40)),
+      pos(rand(383, 557), FLOOR - rand(0,27)),
       anchor("bot"),
-      scale(0.9),
+      scale(0.6),
       area(),
       "box"
     ]);
   }
-    // the claw of the machine, framw 0 = open, framw 1 = close
+    // the claw of the machine, frame 0 = open, framw 1 = close
     const claw = add([
       sprite("claw", {frame: 0}),
       pos(400, TOP),
       anchor("top"),
-      scale(0.9),
+      scale(0.6),
       area(),
     ]);
-    // clae moves left or right
-    onButtonDown("moveLeft", () => claw.move(-SPEED, 0));
-    onButtonDown("moveRight", () => claw.move(SPEED, 0));
+    // claw moves left or right
+    onButtonDown("moveLeft", () => {
+      if (mode === "move") {
+        claw.move(-SPEED, 0)
+      }
+    });
+    onButtonDown("moveRight", () => {
+      if (mode === "move") {
+        claw.move(SPEED, 0)
+      }
+    });
+    // when the claw is touching a box
+    claw.onCollide("box", (box) => {
+      if (mode === "down" && !grabbed) {
+        claw.frame = 1;
+        if (rand() < 0.4) {
+          grabbed = box;
+        }
+        mode = "up";
+      }
+    })
+    
+    function release() {
+      dropped = grabbed; // remember picked box
+      grabbed = null; // has not grabbed anything yet
+      claw.frame = 0; // open the claw
+      mode = "drop"; // box is dropping
+      won_boxes++;
+    }
+    
     // limits claw to left and right wall of machine
     onUpdate(() => {
       claw.pos.x = clamp(claw.pos.x, LEFT_WALL, RIGHT_WALL);
+      if (mode === "down") {
+        claw.move(0, SPEED);
+        if (claw.pos.y >= BOTTOM) {
+          claw.frame = 1; 
+          mode = "up";
+        }
+      } else if (mode === "up") {
+        claw.move(0, -SPEED);
+        if (claw.pos.y <= TOP) {
+          claw.pos.y = TOP;
+          if (grabbed) {
+            mode = "return"; // grabs a box and drops
+          } else {
+            claw.frame = 0;
+            mode = "move"; // misses so try again
+          }
+        }
+      } else if (mode === "return") {
+        claw.move(-SPEED, 0);
+        if (claw.pos.x <= CHUTE) {
+          release();
+        }
+      } else if (mode === "drop") {
+        dropped.move(0, 300); // box falls down
+        if (dropped.pos.y >= FLOOR + 10) { // box reaches the chute
+          destroy(dropped);
+          mode = "done"; // only runs once
+          
+          add([
+            sprite("claw_box"),
+            pos(387, 450),
+            anchor("bot"),
+            scale(0.6)
+          ]);
+          
+          let prize = choose(SKINS);
+          if (won_boxes > 5 && rand() < 0.03) { // golden duck rand
+            prize = "golden_duck";
+          }
+         // wait(0.6, () => go("box-reveal", prize));
+        }
+      }
+      if (grabbed) {
+        grabbed.pos = claw.pos.add(0, 50); // box with claw
+      }
     });
-  
-    onButtonPress("back", () => go("arcade-scene"));
+    onButtonPress("enter", () => {
+      if (mode === "move") {
+        mode = "down";
+      }
+    });
+    
+    onButtonPress("back", () => go("lobby"));
   });
 
 // duckman Machine Scene
@@ -690,3 +769,4 @@ scene("duckman-machine-scene", () =>{
   
   go("start");
 }
+        
