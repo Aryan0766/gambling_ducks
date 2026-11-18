@@ -142,6 +142,7 @@ scene("tcg-gacha-scene", () => {
     anchor("center"),
   ]);
   
+  // Player presses enter to insert coin
   onButtonPress("enter", () => {
     if (isTwist) return;
     
@@ -149,11 +150,15 @@ scene("tcg-gacha-scene", () => {
     let timer = 0;
     const spinTime = 1.5;
     
+    // Animates machine to show capsule is being fetches
     const spin = onUpdate(() => {
       timer += dt();
       twist.angle += 2;
+      
+      // Makes capsules shake when machine is played
       capsules.pos = vec2(rand(-2, 2), rand(-2, 2));
       
+      // Checks if machine is done getting pack and stops animation
       if(timer >= spinTime){
         spin.cancel();
         
@@ -167,10 +172,9 @@ scene("tcg-gacha-scene", () => {
           scale(1.2),
           z(10),
         ]);
-        
       }
-    });
-    
+      
+    });  
   });
   
 });
