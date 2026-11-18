@@ -107,7 +107,6 @@ function startGame () {
   // sounds
 
   const SOUND_FILES = {
-    gong: "sounds/shinese-gong.mp3", 
     spin: "", 
     reelStop: "", 
     win: "sounds/money-soundfx.mp3", 
@@ -305,7 +304,6 @@ function startGame () {
     add([sprite("pack"), pos(450, 300), anchor("center"), scale(0.45)]);
 
     makeButton("PLAY", 450, 490, 200, 50, rgb(236, 64, 160), () => {
-      playSound("gong");
       startMusic(); 
       go("lobby");
     });
