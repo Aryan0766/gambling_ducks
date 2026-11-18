@@ -104,8 +104,6 @@ function startGame () {
   let collection = []; // aquired/saved skins
   let equipped = null; // current skin of the duck
 
-
-
   // sounds
 
   const SOUND_FILES = {
