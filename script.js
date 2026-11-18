@@ -41,9 +41,12 @@ loadSprite("coin-machine", "tcg-packs/tcgMachine.png");
 loadSprite("capsules", "tcg-packs/tcgCapsules.png");
 loadSprite("basic-machine", "tcg-packs/tcgMachineBasic.png");
 loadSprite("twist", "tcg-packs/tcgTwist.png");
+loadSprite("common1", "tcg-packs/common1.png");
+loadSprite("uncommon1", "tcg-packs/uncommon1.png");
 
 // Loading audio assests
 loadSound("bgm", "sounds/casino_ambiance.mp3");
+loadSound("rip", "sounds/rippingSound.mp3");
 
 // Arcade Scene
 scene("arcade-scene", () => {
