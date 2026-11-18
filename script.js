@@ -148,7 +148,12 @@ scene("tcg-gacha-scene", () => {
     
     isTwist = true;
     let timer = 0;
-    const spinTime = 1.5;
+    const spinTime = 4;
+    
+    // Sounds of the capsules moving in the machine
+    const shake = play("shake", {
+    volume: 0.6,
+    });
     
     // Animates machine to show capsule is being fetches
     const spin = onUpdate(() => {
