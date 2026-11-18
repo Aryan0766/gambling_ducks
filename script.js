@@ -1,4 +1,4 @@
-kaplay({
+ kaplay({
   // Button Setup
   buttons: {
     moveUp: {
@@ -174,4 +174,4 @@ scene("coin-machine-scene", () =>{
 });
 
 // Starts game at arcade lobby
-go("arcade-scene");
+go("arcade-scene"); 

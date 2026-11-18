@@ -12,7 +12,7 @@ function startGame () {
   });
 
   // load the files from the repo
-  loadSprite("box", "blind_boxes/box1.png");
+  loadSprite("box", "");
   loadSprite("card", "blind_boxes/card1.png");
   loadSprite("pack", "tcg-packs/spacePack.png");
   loadSound("casino", "sounds/casino_ambiance.mp3");
