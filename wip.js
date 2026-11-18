@@ -16,6 +16,21 @@ function startGame () {
   loadSprite("card", "blind_boxes/card1.png");
   loadSprite("pack", "tcg-packs/spacePack.png");
   loadSound("casino", "sounds/casino_ambiance.mp3");
+  loadSound("rip", "sounds/rippingSound.mp3");
+  
+  // Loading claw machince assets
+  loadSprite("gacha-machine", "tcg-packs/tcgMachine.png");
+  loadSprite("claw_bg", "blind_boxes/claw_machine.png");
+  loadSprite("claw", "blind_boxes/claw_sheet.png", {sliceX: 2});
+  loadSprite("claw_box", "blind_boxes/claw_box.png");
+
+  // loading tcg machine assets
+  loadSprite("capsules", "tcg-packs/tcgCapsules.png");
+  loadSprite("basic-machine", "tcg-packs/tcgMachineBasic.png");
+  loadSprite("twist", "tcg-packs/tcgTwist.png");
+  loadSprite("common1", "tcg-packs/common1.png");
+  loadSprite("uncommon1", "tcg-packs/uncommon1.png");
+
 
   // the slot symbols sheet: 5 pictures in one row (duck, gem, bow, coin, egg)
   loadSprite("symbols", "ducks/symbols.png", {
@@ -320,10 +335,10 @@ function startGame () {
     // the machines: only DUCK SLOTS works so far, the other three are empty spots for new games
     // (to add a game later: change a "COMING SOON" line to makeCabinet(x, "NAME", null, 0, rgb(40, 30, 100), () => go("scene-name"), "?") and add that machine to the machines list)
     const slotMachine = makeCabinet(130, "DUCK SLOTS", null, 0, rgb(40, 30, 100), () => go("slots"), "777");
-    makeCabinet(340, "COMING SOON", null, 0, rgb(50, 50, 60), null);
-    makeCabinet(550, "COMING SOON", null, 0, rgb(50, 50, 60), null);
+    const tcgMachine = makeCabinet(340, "TCG Gacha", null, 0, rgb(50, 50, 60), () => go("tcg-gacha-scene"), "TCG");
+    const clawMachine = makeCabinet(550, "Claw Machine", null, 0, rgb(50, 50, 60), () => go("claw-machine-scene"), "Claw");
     makeCabinet(760, "COMING SOON", null, 0, rgb(50, 50, 60), null);
-    const machines = [slotMachine];
+    const machines = [slotMachine, tcgMachine, clawMachine];
 
     // the duck + the message that pops up when it is next to a machine
     const duck = makeDuck(450, 505);
@@ -524,6 +539,117 @@ function startGame () {
     });
     makeMusicSwitch(790, 520);
   });
+  
+  // TCG Gacha Scene
+  scene("tcg-gacha-scene", () => {
+    let isTwist = false;
+    let isOpen = false;
+  
+    const machine = add([
+      sprite("basic-machine"),
+      pos(center()),
+      anchor("center"),
+      scale(2.4),
+    ]);
+  
+    const capsules = machine.add([
+      sprite("capsules"),
+      pos(),
+      anchor("center"),
+    ]);
+  
+    const twist = machine.add([
+      sprite("twist"),
+      pos(0,0),
+      //rotate(),
+      anchor("center"),
+    ]);
+  
+    // Player presses enter to insert coin
+    onButtonPress("enter", () => {
+      if (isTwist) return;
+    
+      isTwist = true;
+      let timer = 0;
+      const spinTime = 4;
+    
+      // Sounds of the capsules moving in the machine
+      const shake = play("shake", {
+      volume: 0.6,
+      });
+    
+      // Animates machine to show capsule is being fetches
+      const spin = onUpdate(() => {
+        timer += dt();
+        twist.angle += 2;
+      
+        // Makes capsules shake when machine is played
+        capsules.pos = vec2(rand(-2, 2), rand(-2, 2));
+        
+        // Checks if machine is done getting pack and stops animation
+        if(timer >= spinTime){
+          spin.cancel();
+        
+          twist.angle = 0;
+          capsules.pos = vec2(0, 0);
+        
+          const pack = add([
+            sprite("spacePack"),
+            pos(center()),
+            anchor("center"),
+            scale(1.2),
+            z(10),
+          ]);
+        }
+      
+      });  
+    });
+  });
+
+  // Claw Machine Scene
+  scene("claw-machine-scene", () => {
+    const TOP = 200; // where the claw is hanging
+    const FLOOR = 467; // bottom of the glass in the machine
+    const LEFT_WALL = 243; // furthest left the claw can go
+    const RIGHT_WALL = 557; // furthest right the claw can go
+    const SPEED = 250; // speed of claw moving
+    // claw machine background
+    add([
+      sprite("claw_bg"),
+      pos(center()),
+      anchor("center"),
+      scale(0.9)
+    ]);
+    // rand placement of blind boxes
+    for (let i = 0; i < 20; i++) {
+      add([
+      sprite("claw_box"),
+      pos(rand(300, 560), FLOOR - rand(0,40)),
+      anchor("bot"),
+      scale(0.9),
+      area(),
+      "box"
+    ]);
+  }
+    // the claw of the machine, framw 0 = open, framw 1 = close
+    const claw = add([
+      sprite("claw", {frame: 0}),
+      pos(400, TOP),
+      anchor("top"),
+      scale(0.9),
+      area(),
+    ]);
+    // clae moves left or right
+    onButtonDown("moveLeft", () => claw.move(-SPEED, 0));
+    onButtonDown("moveRight", () => claw.move(SPEED, 0));
+    // limits claw to left and right wall of machine
+    onUpdate(() => {
+      claw.pos.x = clamp(claw.pos.x, LEFT_WALL, RIGHT_WALL);
+    });
+  
+    onButtonPress("back", () => go("arcade-scene"));
+  });
+
 
   go("start");
 }
