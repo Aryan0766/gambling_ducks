@@ -24,7 +24,7 @@ function startGame () {
   loadSound("casino", "sounds/casino_ambiance.mp3");
   loadSound("rip", "sounds/rippingSound.mp3");
   loadSound("shake","sounds/shakingSound.mp3");
-  
+
   // loading claw machine assets
   loadSprite("blind_box", "blind_boxes/blind_box.png");
   loadSprite("claw_bg", "blind_boxes/claw_machine.png");
@@ -37,7 +37,7 @@ function startGame () {
   loadSprite("sweater", "blind_boxes/sweater.png");
   loadSprite("cape", "blind_boxes/cape.png");
   loadSprite("golden_duck", "blind_boxes/golden_duck.png");
-  
+
   const SKINS = ["bow", "party_hat", "gold_crown", "flower_pin", "sweater", "cape"];
 
   // loading tcg machine assets
@@ -48,7 +48,9 @@ function startGame () {
   loadSprite("twist", "tcg-packs/tcgTwist.png");
   loadSprite("common1", "tcg-packs/common1.png");
   loadSprite("uncommon1", "tcg-packs/uncommon1.png");
-
+  
+  //loading duckman asssets
+  loadSprite("duckman_bg", "duckman/duckman.png");
 
   // the slot symbols sheet
   loadSprite("symbols", "ducks/symbols.png", {
@@ -101,8 +103,6 @@ function startGame () {
   let won_boxes = 0; // boxes won from the claw machine
   let collection = []; // aquired/saved skins
   let equipped = null; // current skin of the duck
-
-
 
   // sounds
 
@@ -201,7 +201,7 @@ function startGame () {
 
   // makes machine in the lobby
   function makeCabinet (x, words, spriteName, spriteScale, bodyColor, action, screenWords = "?") {
-    
+
     add([rect(170, 250), pos(x, 270), anchor("center"), color(bodyColor), outline(4, rgb(255, 80, 200))]);
 
     add([rect(170, 34), pos(x, 162), anchor("center"), color(20, 10, 40), outline(4, rgb(90, 220, 255))]);
@@ -298,9 +298,9 @@ function startGame () {
     add([text("~ the quack box casino ~", {
       size: 16
     }), pos(450, 125), anchor("center"), color(90, 220, 255)]);
-   
 
-    
+
+
     add([sprite("pack"), pos(450, 300), anchor("center"), scale(0.45)]);
 
     makeButton("PLAY", 450, 490, 200, 50, rgb(236, 64, 160), () => {
@@ -343,8 +343,8 @@ function startGame () {
     const slotMachine = makeCabinet(130, "DUCK SLOTS", null, 0, rgb(40, 30, 100), () => go("slots"), "777");
     const tcgMachine = makeCabinet(340, "TCG Gacha", null, 0, rgb(50, 50, 60), () => go("tcg-gacha-scene"), "TCG");
     const clawMachine = makeCabinet(550, "Claw Machine", null, 0, rgb(50, 50, 60), () => go("claw-machine-scene"), "Claw");
-    makeCabinet(760, "COMING SOON", null, 0, rgb(50, 50, 60), null);
-    const machines = [slotMachine, tcgMachine, clawMachine];
+    const duckmanMachine = makeCabinet(760, "Duckman Machine", null, 0, rgb(50, 50, 60), () => go("duckman-machine-scene"), "duckman");
+    const machines = [slotMachine, tcgMachine, clawMachine, duckmanMachine];
 
     // msg when duck is at machine
     const duck = makeDuck(450, 505);
@@ -535,60 +535,60 @@ function startGame () {
     });
     makeMusicSwitch(790, 520);
   });
-  
+
   // TCG Gacha Scene
   scene("tcg-gacha-scene", () => {
     let isTwist = false;
     let isOpen = false;
-  
+
     const machine = add([
       sprite("basic-machine"),
       pos(center()),
       anchor("center"),
       scale(1.7),
     ]);
-  
+
     const capsules = machine.add([
       sprite("capsules"),
       pos(),
       anchor("center"),
     ]);
-  
+
     const twist = machine.add([
       sprite("twist"),
       pos(0,0),
       //rotate(),
       anchor("center"),
     ]);
-  
+
     // Player presses enter to insert coin
     onButtonPress("enter", () => {
       if (isTwist) return;
-    
+
       isTwist = true;
       let timer = 0;
       const spinTime = 4;
-    
+
       // Sounds of the capsules moving in the machine
       const shake = play("shake", {
       volume: 0.6,
       });
-    
+
       // Animates machine to show capsule is being fetches
       const spin = onUpdate(() => {
         timer += dt();
         twist.angle += 2;
-      
+
         // Makes capsules shake when machine is played
         capsules.pos = vec2(rand(-2, 2), rand(-2, 2));
-        
+
         // Checks if machine is done getting pack and stops animation
         if(timer >= spinTime){
           spin.cancel();
-        
+
           twist.angle = 0;
           capsules.pos = vec2(0, 0);
-        
+
           const pack = add([
             sprite("spacePack"),
             pos(center()),
@@ -597,7 +597,7 @@ function startGame () {
             z(10),
           ]);
         }
-      
+
       });  
     });
   });
@@ -611,10 +611,10 @@ function startGame () {
     const SPEED = 170; // speed of claw moving
     const BOTTOM = FLOOR - 47; // lowest the claw goes
     const CHUTE = 355; // the dropped prize goes here
-    let mode = "move";
+    let mode = "move"; // mode of the claw, move, up, down, return, drop and done
     let grabbed = null; // box being grabbed
     let dropped = null; // box falling into chute
-    
+
     // claw machine background
     add([
       sprite("claw_bg"),
@@ -662,7 +662,7 @@ function startGame () {
         mode = "up";
       }
     })
-    
+
     function release() {
       dropped = grabbed; // remember picked box
       grabbed = null; // has not grabbed anything yet
@@ -670,7 +670,7 @@ function startGame () {
       mode = "drop"; // box is dropping
       won_boxes++;
     }
-    
+
     // limits claw to left and right wall of machine
     onUpdate(() => {
       claw.pos.x = clamp(claw.pos.x, LEFT_WALL, RIGHT_WALL);
@@ -701,14 +701,14 @@ function startGame () {
         if (dropped.pos.y >= FLOOR + 10) { // box reaches the chute
           destroy(dropped);
           mode = "done"; // only runs once
-          
+
           add([
             sprite("claw_box"),
             pos(387, 450),
             anchor("bot"),
             scale(0.6)
           ]);
-          
+
           let prize = choose(SKINS);
           if (won_boxes > 5 && rand() < 0.03) { // golden duck rand
             prize = "golden_duck";
@@ -725,13 +725,44 @@ function startGame () {
         mode = "down";
       }
     });
-    
+
     onButtonPress("back", () => go("lobby"));
   });
-
-//scene("blind-box-reveal", () => {
-
-  //});
+  //scene("blind-box-reveal", () => {
+  // });
   
+  scene("duckman-machine-scene", () => {
+    // duckman machine background
+    add([
+      sprite("duckman_bg"),
+      pos(center()),
+      anchor("center"),
+      scale(0.8)]);
+    
+    //score
+    let score = 0;
+    //map layout
+    // '#' = Wall, '.' = Pellet, 'P' = Pac-Man, 'G' = Ghost
+    const mapLayout = [
+        "######################",
+        "#P.........#........G#",
+        "#.###.#.......##.###.#",
+        "#....................#",
+        "#.##....#.#.#.##..#.#",
+        "#...........#.#.....#",
+        "#####.#.#.##......###",
+        "#...................#",
+        "#####.#.#.#.#.....###",
+        "#........#....#.....#",
+        "#.#.##.#.#.#.....##.#",
+        "#...................#",
+        "#.###....##.#...###.#",
+        "#G.................G#",
+        "#####################",
+    ];
+  
+  onButtonPress("back", () => go("arcade-scene"));
+  });
+
   go("start");
 }
