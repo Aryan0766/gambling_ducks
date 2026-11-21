@@ -22,7 +22,7 @@ function startGame () {
   // load the files from the repo
   loadSprite("pack", "tcg-packs/spacePack.png");
   loadSound("casino", "sounds/casino_ambiance.mp3");
-  loadSound("rip", "sounds/rippingSound.mp3");
+  loadSound("rip", "sounds/rippingSound.MP3");
   loadSound("shake","sounds/shakingSound.mp3");
 
   // loading claw machine assets
@@ -42,12 +42,18 @@ function startGame () {
 
   // loading tcg machine assets
   loadSprite("spacePack", "tcg-packs/spacePack.png");
+  loadSprite("topPack", "tcg-packs/bottomPack.png");
+  loadSprite("botPack", "tcg-packs/topPack.png");
   loadSprite("capsules", "tcg-packs/tcgCapsules.png");
   loadSprite("gacha-machine", "tcg-packs/tcgMachine.png");
   loadSprite("basic-machine", "tcg-packs/tcgMachineBasic.png");
   loadSprite("twist", "tcg-packs/tcgTwist.png");
   loadSprite("common1", "tcg-packs/common1.png");
+  loadSprite("common2", "tcg-packs/common2.png");
+  loadSprite("common3", "tcg-packs/common3.png");
   loadSprite("uncommon1", "tcg-packs/uncommon1.png");
+  loadSprite("uncommon2", "tcg-packs/uncommon2.png");
+  loadSprite("rare", "tcg-packs/rare1.png");
   
   //loading duckman asssets
   loadSprite("duckman_bg", "duckman/duckman.png");
@@ -103,6 +109,60 @@ function startGame () {
   let won_boxes = 0; // boxes won from the claw machine
   let collection = []; // aquired/saved skins
   let equipped = null; // current skin of the duck
+  
+  // TCG Variables
+  const commonCard = 0.65;
+  const uncommonCard = 0.30;
+  const rareCard = 0.05;
+  const totalCards = 3;
+  const packCost = 10;
+  
+  const CARD_SELECTION = {
+    common: ["common1", "common2", "common3"],
+    uncommon: ["uncommon1", "uncommon2"],
+    rare: ["rare"],
+  };
+  
+  /*
+      TCG Functions
+  */
+  
+  // Returns the card rarity from the randomly generated percentage
+  function cardRarity(p){
+    if(p <= rareCard){
+      return "rare";
+    }
+    if(p <= uncommonCard){
+      return "uncommon";
+    }
+    return "common";
+  }
+  
+  // Returns random card based off the rarity selection
+  function getRandomCard(selection){
+    let index = Math.floor(Math.random() * selection.length);
+    return selection[index];
+  }
+  
+  // Returns pack with 3 random cards
+  function getPack(){
+    const pack = [];
+    
+    for(let i = 0; i < 3; i++){
+      let rarity = Math.random();
+      let cardR = cardRarity(rarity);
+      let card = getRandomCard(CARD_SELECTION[cardR]);
+      
+      // Puts card in the pack
+      pack.push({
+        slot: i + 1,
+        cardR,
+        card
+      });
+    }
+    
+    return pack;
+  }
 
   // sounds
 
@@ -538,8 +598,20 @@ function startGame () {
 
   // TCG Gacha Scene
   scene("tcg-gacha-scene", () => {
-    let isTwist = false;
-    let isOpen = false;
+    let state = "idle";
+    let packSprite = null;
+    let seenCards = [];
+    let index = 0;
+    
+    // Adds the coin text to the game
+    const coinText = add([
+      text("COINS:" + coins, {
+      size: 16
+    }),
+      pos(20, 20), 
+      color(255, 214, 102),
+      z(100),
+    ]);
 
     const machine = add([
       sprite("basic-machine"),
@@ -563,43 +635,118 @@ function startGame () {
 
     // Player presses enter to insert coin
     onButtonPress("enter", () => {
-      if (isTwist) return;
+      // Starts the machine to spin and get pack
+      if(state === "idle"){
+        // If player doesn't have enough coins, they cannot play
+        if(coins < 10){
+          return;
+        }
+        coins -= 10;
+        coinText.text = "COINS: " + coins;
+        state = "spinning";
+        
+        let timer = 0;
+        const spinTime = 4;
 
-      isTwist = true;
-      let timer = 0;
-      const spinTime = 4;
+        // Sounds of the capsules moving in the machine
+        const shake = play("shake", {
+        volume: 0.7,
+        });
 
-      // Sounds of the capsules moving in the machine
-      const shake = play("shake", {
-      volume: 0.6,
-      });
+        // Animates machine to show capsule is being fetches
+        const spin = onUpdate(() => {
+          timer += dt();
 
-      // Animates machine to show capsule is being fetches
-      const spin = onUpdate(() => {
-        timer += dt();
-        twist.angle += 2;
+          // Makes capsules shake when machine is played
+          capsules.pos = vec2(rand(-2, 2), rand(-2, 2));
 
-        // Makes capsules shake when machine is played
-        capsules.pos = vec2(rand(-2, 2), rand(-2, 2));
+          // Checks if machine is done getting pack and stops animation
+          if(timer >= spinTime){
+            spin.cancel();
 
-        // Checks if machine is done getting pack and stops animation
-        if(timer >= spinTime){
-          spin.cancel();
+            twist.angle = 0;
+            capsules.pos = vec2(0, 0);
 
-          twist.angle = 0;
-          capsules.pos = vec2(0, 0);
-
-          const pack = add([
-            sprite("spacePack"),
+            // Pack shows at the center of the screen
+            packSprite = add([
+              sprite("spacePack"),
+              pos(center()),
+              anchor("center"),
+              scale(0.8),
+              z(10),
+            ]);
+            
+            // Changes state to open pack
+            state = "ready";
+          }
+        });
+        return;
+      }
+      
+      // Player opens the pack and reveals the stack of cards
+      if (state === "ready"){
+        play("rip", {volume: 0.8});
+        
+        // Makes sure previous pack is gone
+        if(packSprite){
+          destroy(packSprite);
+          packSprite = null;
+        }
+        
+        let pack = getPack();
+        
+        for(let i = 0; i < pack.length; i++){
+          const card = add([
+            sprite(pack[i].card),
             pos(center()),
             anchor("center"),
-            scale(0.8),
-            z(10),
+            scale(0.9),
+            z(11 + i),
           ]);
+          card.hidden = i > index;
+          seenCards.push(card);
         }
-
-      });  
+        
+        state = "reveal"
+        return;
+      }
+      
+      // Go through each card to see what player got
+      if(state === "reveal"){
+        index += 1;
+        
+        if(index < seenCards.length){
+          for(let i = 0; i < seenCards.length; i++){
+            seenCards[i].hidden = i > index;
+          }
+        }
+        else{
+          for(let i = 0; i < seenCards.length; i++){
+            seenCards[i].pos = vec2(270 + i * 180, height() / 2);
+          }
+          state = "end";
+        }
+        return;
+      }
+      
+      // Resets pack and cards for next gacha
+      if(state === "end"){
+        for(let i = 0; i < seenCards.length; i++){
+          destroy(seenCards[i]);
+        }
+        
+        seenCards = [];
+        index = 0;
+        state = "idle";
+      }
+      
     });
+    
+    // Sends player back to lobby
+    onButtonPress("back", () => {
+      go("lobby");
+    });
+    
   });
 
   // Claw Machine Scene
@@ -741,13 +888,26 @@ function startGame () {
     
     //score
     let score = 0;
+    //map layout
+    // '#' = Wall, '.' = Pellet, 'P' = Pac-Man, 'G' = Ghost
+    const mapLayout = [
+        "######################",
+        "#P.........#........G#",
+        "#.###.#.......##.###.#",
+        "#....................#",
+        "#.##....#.#.#.##..#.#",
+        "#...........#.#.....#",
+        "#####.#.#.##......###",
+        "#...................#",
+        "#####.#.#.#.#.....###",
+        "#........#....#.....#",
+        "#.#.##.#.#.#.....##.#",
+        "#...................#",
+        "#.###....##.#...###.#",
+        "#G.................G#",
+        "#####################",
+    ];
   
-  const TILE = 28;
-  const START_X = 190;
-  const START_Y = 300;
-
-  let seeds = [];
-    
   onButtonPress("back", () => go("arcade-scene"));
   });
 
