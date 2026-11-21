@@ -42,12 +42,18 @@ function startGame () {
 
   // loading tcg machine assets
   loadSprite("spacePack", "tcg-packs/spacePack.png");
+  loadSprite("topPack", "tcg-packs/bottomPack.png");
+  loadSprite("botPack", "tcg-packs/topPack.png");
   loadSprite("capsules", "tcg-packs/tcgCapsules.png");
   loadSprite("gacha-machine", "tcg-packs/tcgMachine.png");
   loadSprite("basic-machine", "tcg-packs/tcgMachineBasic.png");
   loadSprite("twist", "tcg-packs/tcgTwist.png");
   loadSprite("common1", "tcg-packs/common1.png");
+  loadSprite("common2", "tcg-packs/common2.png");
+  loadSprite("common3", "tcg-packs/common3.png");
   loadSprite("uncommon1", "tcg-packs/uncommon1.png");
+  loadSprite("uncommon2", "tcg-packs/uncommon2.png");
+  loadSprite("rare", "tcg-packs/rare1.png");
   
   //loading duckman asssets
   loadSprite("duckman_bg", "duckman/duckman.png");
@@ -103,6 +109,12 @@ function startGame () {
   let won_boxes = 0; // boxes won from the claw machine
   let collection = []; // aquired/saved skins
   let equipped = null; // current skin of the duck
+  
+  // tcg variables
+  const commonCard = 0.75;
+  const uncommonCard = 0.20;
+  const rareCard = 0.05;
+  const totalCards = 3;
 
   // sounds
 
@@ -596,10 +608,18 @@ function startGame () {
             scale(0.8),
             z(10),
           ]);
+          
         }
 
-      });  
+      }); 
+      
     });
+    
+    // Sends player back to lobby
+    onButtonPress("back", () => {
+      go("lobby");
+    });
+    
   });
 
   // Claw Machine Scene
@@ -741,13 +761,26 @@ function startGame () {
     
     //score
     let score = 0;
+    //map layout
+    // '#' = Wall, '.' = Pellet, 'P' = Pac-Man, 'G' = Ghost
+    const mapLayout = [
+        "######################",
+        "#P.........#........G#",
+        "#.###.#.......##.###.#",
+        "#....................#",
+        "#.##....#.#.#.##..#.#",
+        "#...........#.#.....#",
+        "#####.#.#.##......###",
+        "#...................#",
+        "#####.#.#.#.#.....###",
+        "#........#....#.....#",
+        "#.#.##.#.#.#.....##.#",
+        "#...................#",
+        "#.###....##.#...###.#",
+        "#G.................G#",
+        "#####################",
+    ];
   
-  const TILE = 28;
-  const START_X = 190;
-  const START_Y = 300;
-
-  let seeds = [];
-    
   onButtonPress("back", () => go("arcade-scene"));
   });
 
