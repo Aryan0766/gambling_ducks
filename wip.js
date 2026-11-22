@@ -57,6 +57,7 @@ function startGame () {
   
   //loading duckman asssets
   loadSprite("duckman_bg", "duckman/duckman.png");
+  loadSprite("steel","blind_boxes/blind_box.png");
 
   // the slot symbols sheet
   loadSprite("symbols", "ducks/symbols.png", {
@@ -878,38 +879,211 @@ function startGame () {
   //scene("blind-box-reveal", () => {
   // });
   
-  scene("duckman-machine-scene", () => {
-    // duckman machine background
-    add([
-      sprite("duckman_bg"),
-      pos(center()),
-      anchor("center"),
-      scale(0.8)]);
-    
-    //score
-    let score = 0;
-    //map layout
-    // '#' = Wall, '.' = Pellet, 'P' = Pac-Man, 'G' = Ghost
-    const mapLayout = [
-        "######################",
-        "#P.........#........G#",
-        "#.###.#.......##.###.#",
-        "#....................#",
-        "#.##....#.#.#.##..#.#",
-        "#...........#.#.....#",
-        "#####.#.#.##......###",
-        "#...................#",
-        "#####.#.#.#.#.....###",
-        "#........#....#.....#",
-        "#.#.##.#.#.#.....##.#",
-        "#...................#",
-        "#.###....##.#...###.#",
-        "#G.................G#",
-        "#####################",
-    ];
-  
-  onButtonPress("back", () => go("arcade-scene"));
-  });
+scene("duckman-machine-scene", () => {
 
+    // Background
+    const mazeScale = 0.8;
+    const mazeWidth = 608;
+    const mazeHeight = 672;
+
+    const mazeLeft = center().x - (mazeWidth * mazeScale) / 2;
+    const mazeTop = center().y - (mazeHeight * mazeScale) / 2;
+
+    add([
+        sprite("duckman_bg"),
+        pos(center()),
+        anchor("center"),
+        scale(mazeScale),
+    ]);
+   
+//    //score
+//    let score = 0;    
+//   const scoreLabel = add([text(score), pos(24, 24)]);
+//    // increment score every frame
+// onUpdate(() => {
+//     score++;
+//     scoreLabel.text = score;
+// });d
+   
+    // Maze wall coordinates, i used AI to figure out the coordinates from a predrawn maze. [x, y, width, height]
+
+    const walls = [
+
+        // Top horizontal walls
+        [25, 24, 270, 5],
+        [313, 24, 270, 5],
+
+        // Outer walls
+        [25, 24, 5, 174],
+        [578, 24, 5, 174],
+
+        // Internal walls
+        [164, 132, 24, 150],
+        [420, 132, 24, 150],
+        [228, 132, 152, 24],
+        [292, 152, 24, 66],
+
+        // Center box
+        [228, 260, 152, 24],
+        [228, 324, 152, 24],
+        [228, 260, 24, 88],
+        [356, 260, 24, 88],
+
+        // Middle walls
+        [164, 324, 24, 88],
+        [420, 324, 24, 88],
+        [228, 388, 152, 24],
+        [292, 408, 24, 66],
+
+        // Bottom walls
+        [164, 452, 88, 24],
+        [356, 452, 88, 24],
+        [228, 516, 152, 24],
+        [292, 536, 24, 66],
+
+    ];
+
+     for (const [x, y, w, h] of walls) {
+        add([
+            rect(w * mazeScale, h * mazeScale),
+            pos(
+                mazeLeft + x * mazeScale,
+                mazeTop + y * mazeScale
+            ),
+            area(),
+            body({ isStatic: true }),
+            opacity(0.5),
+            "walls",
+        ]);
+    }
+   
+    // Duck
+    const SPEED = 200;
+  
+    const player = add([
+        sprite("duck"),
+        pos(
+            mazeLeft + 50 * mazeScale,
+            mazeTop + 100 * mazeScale
+        ),
+        anchor("center"),
+        area(),
+        body(),
+        scale(0.7),
+    ]);
+
+    let facing = "left";
+    let currentAnim = "idle";
+
+    function setAnim(name) {
+        if (currentAnim === name) return;
+        player.play(name);
+        currentAnim = name;
+    }
+
+    // Movement
+    onUpdate(() => {
+
+        let dx = 0;
+        let dy = 0;
+
+        if (isKeyDown("left") || isKeyDown("a")) dx = -1;
+        if (isKeyDown("right") || isKeyDown("d")) dx = 1;
+        if (isKeyDown("up") || isKeyDown("w")) dy = -1;
+        if (isKeyDown("down") || isKeyDown("s")) dy = 1;
+
+          player.pos.x = clamp(
+            player.pos.x,
+            mazeLeft + 30 * mazeScale,
+            mazeLeft + (mazeWidth - 30) * mazeScale
+        );
+        player.pos.y = clamp(
+            player.pos.y,
+            mazeTop + 30 * mazeScale,
+            mazeTop + (mazeHeight - 30) * mazeScale
+        );
+      
+        if (dx < 0) facing = "left";
+        if (dx > 0) facing = "right";
+
+        const moving = dx !== 0 || dy !== 0;
+      
+        if (moving) {
+            // move() respects collisions; unit() keeps diagonal speed equal
+            player.move(vec2(dx, dy).unit().scale(SPEED));
+        }
+        if (moving) {
+            player.flipX = false;
+            setAnim(facing);
+        } else {
+            setAnim("idle");
+            player.flipX = facing === "right";
+        }
+
+    });
+   
+   player.onCollide("walls", () => {
+    shake();
+  });
+   
+   // //when game is lost
+   // scene("lose", (score) =>{
+   //  add([text("Game Over"), pos(center()), anchor("center")]);
+   
+   const TILE_WIDTH = 64;
+  const TILE_HEIGHT = TILE_WIDTH;
+
+// function createMazeMap(width, height) {
+//     const size = width * height;
+//     function getUnvisitedNeighbours(map, index) {
+//         const n = [];
+//         const x = Math.floor(index / width);
+//         if (x > 1 && map[index - 2] === 2) n.push(index - 2);
+//         if (x < width - 2 && map[index + 2] === 2) n.push(index + 2);
+//         if (index >= 2 * width && map[index - 2 * width] === 2) {
+//             n.push(index - 2 * width);
+//         }
+//         if (index < size - 2 * width && map[index + 2 * width] === 2) {
+//             n.push(index + 2 * width);
+//         }
+//         return n;
+//     }
+//     const map = new Array(size).fill(1, 0, size);
+//     map.forEach((_, index) => {
+//         const x = Math.floor(index / width);
+//         const y = Math.floor(index % width);
+//         if ((x & 1) === 1 && (y & 1) === 1) {
+//             map[index] = 2;
+//         }
+//     });
+  
+//     const stack = [];
+//     const startX = Math.floor(Math.random() * (width - 1)) | 1;
+//     const startY = Math.floor(Math.random() * (height - 1)) | 1;
+//     const start = startX + startY * width;
+//     map[start] = 0;
+//     stack.push(start);
+//     while (stack.length) {
+//         const index = stack.pop();
+//         const neighbours = getUnvisitedNeighbours(map, index);
+//         if (neighbours.length > 0) {
+//             stack.push(index);
+//             const neighbour =
+//                 neighbours[Math.floor(neighbours.length * Math.random())];
+//             const between = (index + neighbour) / 2;
+//             map[neighbour] = 0;
+//             map[between] = 0;
+//             stack.push(neighbour);
+//         }
+//     }
+//     return map;
+// }
+
+
+    // Back button
+    onButtonPress("back", () => go("lobby"));
+
+    });
+  
   go("start");
 }
