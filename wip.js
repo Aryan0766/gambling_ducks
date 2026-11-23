@@ -44,7 +44,12 @@ function startGame () {
   loadSprite("blind_box", "blind_boxes/blind_box.png");
   loadSprite("claw_bg", "blind_boxes/claw_machine.png");
   loadSprite("claw", "blind_boxes/claw_sheet.png", {
-    sliceX: 2
+    sliceX: 18,
+    anims: {
+      drop: { from: 0, to: 7, speed: 12 },
+      grab: { from: 8, to: 10, speed: 12 },
+      rise: { from: 11, to: 17, speed: 12 },
+    },
   });
   loadSprite("claw_box", "blind_boxes/claw_box.png");
   loadSprite("bow", "blind_boxes/bow.png");
@@ -54,6 +59,7 @@ function startGame () {
   loadSprite("sweater", "blind_boxes/sweater.png");
   loadSprite("cape", "blind_boxes/cape.png");
   loadSprite("golden_duck", "blind_boxes/golden_duck.png");
+  loadSprite("card_holder", "blind_boxes/cardholder_sheet.png", {sliceX: 5, sliceY: 2});
 
   const SKINS = ["bow", "party_hat", "gold_crown", "flower_pin", "sweater", "cape"];
 
@@ -473,6 +479,8 @@ function startGame () {
 
     makeButton("BACK", 80, 520, 130, 32, rgb(60, 60, 120), () => go("start"));
     makeMusicSwitch(790, 520);
+      // b opens the collection book
+    onKeyPress("b", () => go("collection", 0, "lobby"));
   });
 
   // slots
@@ -775,6 +783,9 @@ function startGame () {
     const SPEED = 170; // speed of claw moving
     const BOTTOM = FLOOR - 47; // lowest the claw goes
     const CHUTE = 355; // the dropped prize goes here
+    const RAIL_Y = 137; // where the claw sits on the rail
+    const CARRY_Y = 200; // how high a box rides with the claw when grabbed
+    let grabStartY = 0; // box's height when the claw grabs it
     let mode = "move"; // mode of the claw, move, up, down, return, drop and done
     let grabbed = null; // box being grabbed
     let dropped = null; // box falling into chute
@@ -799,13 +810,10 @@ function startGame () {
     }
     // the claw of the machine, frame 0 = open, framw 1 = close
     const claw = add([
-      sprite("claw", {
-        frame: 0
-      }),
-      pos(400, TOP),
+      sprite("claw", { frame: 0 }),
+      pos(400, RAIL_Y),
       anchor("top"),
       scale(0.6),
-      area(),
     ]);
     // claw moves left or right
     onButtonDown("moveLeft", () => {
@@ -818,16 +826,37 @@ function startGame () {
         claw.move(SPEED, 0)
       }
     });
-    // when the claw is touching a box
-    claw.onCollide("box", (box) => {
-      if (mode === "down" && !grabbed) {
-        claw.frame = 1;
-        if (rand() < 0.4) {
-          grabbed = box;
-        }
-        mode = "up";
+    // to drop the claw
+    function drop_claw () {
+      mode = "down";
+      claw.play("drop", { onEnd: () => wait(0.1, tryGrab) });
+    }
+    // tries to grab a box
+    function tryGrab () {
+      const under = get("box")
+        .filter((b) => Math.abs(b.pos.x - claw.pos.x) < 25)
+        .sort((a, b) => a.pos.y - b.pos.y);
+
+      if (under.length > 0 && rand() < 0.4) {
+        grabbed = under[0];
+        grabStartY = grabbed.pos.y;
       }
-    })
+      claw.play("grab", { onEnd: () => wait(0.1, rise_claw) });
+    }
+    // rises with picked boxes
+    function rise_claw () {
+      mode = "up";
+      claw.play("rise", {
+        onEnd: () => {
+          if (grabbed) {
+            mode = "return";
+          } else {
+            claw.frame = 0;
+            mode = "move";
+          }
+        }
+      });
+    }
 
     function release () {
       dropped = grabbed; // remember picked box
@@ -840,24 +869,8 @@ function startGame () {
     // limits claw to left and right wall of machine
     onUpdate(() => {
       claw.pos.x = clamp(claw.pos.x, LEFT_WALL, RIGHT_WALL);
-      if (mode === "down") {
-        claw.move(0, SPEED);
-        if (claw.pos.y >= BOTTOM) {
-          claw.frame = 1;
-          mode = "up";
-        }
-      } else if (mode === "up") {
-        claw.move(0, -SPEED);
-        if (claw.pos.y <= TOP) {
-          claw.pos.y = TOP;
-          if (grabbed) {
-            mode = "return"; // grabs a box and drops
-          } else {
-            claw.frame = 0;
-            mode = "move"; // misses so try again
-          }
-        }
-      } else if (mode === "return") {
+
+      if (mode === "return") {
         claw.move(-SPEED, 0);
         if (claw.pos.x <= CHUTE) {
           release();
@@ -879,24 +892,158 @@ function startGame () {
           if (won_boxes > 5 && rand() < 0.03) { // golden duck rand
             prize = "golden_duck";
           }
-          // wait(0.6, () => go("box-reveal", prize));
+          wait(0.6, () => go("blind-box-reveal", prize));
         }
       }
-      if (grabbed) {
-        grabbed.pos = claw.pos.add(0, 50); // box with claw
+
+      // box rises with the claw, then rides at carry height
+       if (grabbed && mode === "up") {
+        grabbed.pos.x = claw.pos.x;
+        grabbed.pos.y = map(claw.frame, 11, 17, grabStartY, CARRY_Y);
+      } else if (grabbed && mode === "return") {
+        grabbed.pos = vec2(claw.pos.x, CARRY_Y);
       }
     });
+    
     onButtonPress("enter", () => {
       if (mode === "move") {
-        mode = "down";
+        drop_claw();
       }
     });
 
     onButtonPress("back", () => go("lobby"));
   });
-  //scene("blind-box-reveal", () => {
-  // });
+  // reveal of the blind box
+  scene("blind-box-reveal", (prize) => {
+    // blind box sprite before opening
+    const box = add([
+      sprite("blind_box"),
+      pos(450, 250),
+      anchor("center"),
+      scale(0.7)
+    ]);
+    // instructions text messages
+    const instText = add([
+      text("PRESS SPACE TO OPEN", {size:14}),
+      pos(450, 525),
+      anchor("center"),
+      color(255, 214, 102),
+    ]);
+    
+    let opened = false // if the box has been opened or not
+    
+    onKeyPress("space", () => {
+      if (opened) {
+        return; // can only open the box once
+      }
+      opened = true; // marking it open 
+      // get rid of the box to show aquired skins
+      destroy(box);
+      add([
+        sprite(prize),
+        pos(450, 250),
+        anchor("center"),
+        scale(0.8),
+      ]);
+      // if the opened skin is golden give bonus coins
+      if (prize === "golden_duck") {
+        coins += 30;
+        instText.text = "RARE! +30 COINS E: EQUIP   S: SAVE TO COLLECTION";
+      } else {
+        instText.text = "E: EQUIP   S: SAVE TO COLLECTION";
+      }
+    });
+    
+    // e to equip the skin
+    onKeyPress("e", () => {
+      if (!opened) {
+        return; // only after opening
+      } 
+      collection.push(prize); // save it 
+      equipped = prize;
+      go("claw-machine-scene");
+    });
 
+    // c just saves the skin
+    onKeyPress("s", () => {
+      if (!opened) {
+        return; // only after opening
+      } 
+       collection.push(prize); // save it
+      const n = collection.length - 1; // the new card's spot
+      go("collection", Math.min(Math.floor((n + 3) / 2), 8), "claw-machine-scene");
+    });
+   });
+// collection of saved skins
+  scene ("collection", (start_page = 0, returnTo = "lobby") => {
+    const LEFT_SLOT = vec2(251, 267); // left sleeve postion
+    const RIGHT_SLOT = vec2(577, 267); // left sleeve postion
+    const LAST_PAGE = 9; // back cover
+    let page = start_page;
+    let cards = [];
+    
+    // the card holder book
+    const book = add([
+      sprite("card_holder", {frame: 0}),
+      pos(center()),
+      anchor("center"),
+      scale(1.1)
+    ]);
+    // instructions/controls text
+    add([
+      text("LEFT/RIGHT: TURN PAGE ESC: BACK", {size: 12}),
+      pos(450, 525),
+      anchor("center"),
+      color(255, 214, 102)
+    ]);
+    //puts save card in sleeve, skips sleeve is occupied
+    function place_card(i, spot) {
+      if (i >= collection.length) {
+        return;
+      }
+      cards.push(add([
+        sprite(collection[i]),
+        pos(spot),
+        anchor("center"),
+        scale(0.5)
+      ]));
+    }
+    
+    // shows current page and its cards
+    function show_page() {
+      book.frame = page;
+      cards.forEach((c) => destroy(c)); // clears old page cards
+      cards = [];
+
+      if (page === 1) place_card(0, RIGHT_SLOT); // first page has one sleeve
+      if (page >= 2 && page <= 8) { // spreads have two sleeves
+        place_card(2 * page - 3, LEFT_SLOT);
+        place_card(2 * page - 2, RIGHT_SLOT);
+      }
+    }
+    
+    // next page
+    onButtonPress("moveRight", () => {
+      if (page < LAST_PAGE) {
+        page++;
+        show_page();
+      }
+    });
+
+    // previous page
+    onButtonPress("moveLeft", () => {
+      if (page > 0) {
+        page--;
+        show_page();
+      }
+    });
+
+    // back to wherever the book was opened from
+    onButtonPress("back", () => go(returnTo));
+
+    show_page();
+  });
+  
   scene("duckman-machine-scene", () => {
     setGravity(1600);
     const pipeOpen = 240;
