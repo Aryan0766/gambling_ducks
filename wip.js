@@ -11,11 +11,26 @@ function startGame () {
     crisp: true,
     font: "'Press Start 2P', monospace",
     buttons: {
-      moveDown: { keyboard: ["down", "s"], gamepad: ["dpad-down"]},
-      moveLeft: { keyboard: ["left", "a"], gamepad: ["dpad-left"]},
-      moveRight: { keyboard: ["right", "d"], gamepad: ["dpad-right"]},
-      enter: { keyboard: ["enter", "space"], gamepad: ["east"]},
-      back: { keyboard: ["escape"], gamepad: ["south"]}
+      moveDown: {
+        keyboard: ["down", "s"],
+        gamepad: ["dpad-down"]
+      },
+      moveLeft: {
+        keyboard: ["left", "a"],
+        gamepad: ["dpad-left"]
+      },
+      moveRight: {
+        keyboard: ["right", "d"],
+        gamepad: ["dpad-right"]
+      },
+      enter: {
+        keyboard: ["enter", "space"],
+        gamepad: ["east"]
+      },
+      back: {
+        keyboard: ["escape"],
+        gamepad: ["south"]
+      }
     }
   });
 
@@ -23,12 +38,14 @@ function startGame () {
   loadSprite("pack", "tcg-packs/spacePack.png");
   loadSound("casino", "sounds/casino_ambiance.mp3");
   loadSound("rip", "sounds/rippingSound.MP3");
-  loadSound("shake","sounds/shakingSound.mp3");
+  loadSound("shake", "sounds/shakingSound.mp3");
 
   // loading claw machine assets
   loadSprite("blind_box", "blind_boxes/blind_box.png");
   loadSprite("claw_bg", "blind_boxes/claw_machine.png");
-  loadSprite("claw", "blind_boxes/claw_sheet.png", {sliceX: 2});
+  loadSprite("claw", "blind_boxes/claw_sheet.png", {
+    sliceX: 2
+  });
   loadSprite("claw_box", "blind_boxes/claw_box.png");
   loadSprite("bow", "blind_boxes/bow.png");
   loadSprite("party_hat", "blind_boxes/party_hat.png");
@@ -54,10 +71,6 @@ function startGame () {
   loadSprite("uncommon1", "tcg-packs/uncommon1.png");
   loadSprite("uncommon2", "tcg-packs/uncommon2.png");
   loadSprite("rare", "tcg-packs/rare1.png");
-  
-  //loading duckman asssets
-  loadSprite("duckman_bg", "duckman/duckman.png");
-  loadSprite("steel","blind_boxes/blind_box.png");
 
   // the slot symbols sheet
   loadSprite("symbols", "ducks/symbols.png", {
@@ -101,7 +114,8 @@ function startGame () {
     },
   });
 
-
+  // the flower sprite sheet
+  loadSprite("flower", "duckman/flower.png");
 
   // game variables
 
@@ -110,50 +124,50 @@ function startGame () {
   let won_boxes = 0; // boxes won from the claw machine
   let collection = []; // aquired/saved skins
   let equipped = null; // current skin of the duck
-  
+
   // TCG Variables
   const commonCard = 0.65;
   const uncommonCard = 0.30;
   const rareCard = 0.05;
   const totalCards = 3;
   const packCost = 10;
-  
+
   const CARD_SELECTION = {
     common: ["common1", "common2", "common3"],
     uncommon: ["uncommon1", "uncommon2"],
     rare: ["rare"],
   };
-  
+
   /*
       TCG Functions
   */
-  
+
   // Returns the card rarity from the randomly generated percentage
-  function cardRarity(p){
-    if(p <= rareCard){
+  function cardRarity (p) {
+    if (p <= rareCard) {
       return "rare";
     }
-    if(p <= uncommonCard){
+    if (p <= uncommonCard) {
       return "uncommon";
     }
     return "common";
   }
-  
+
   // Returns random card based off the rarity selection
-  function getRandomCard(selection){
+  function getRandomCard (selection) {
     let index = Math.floor(Math.random() * selection.length);
     return selection[index];
   }
-  
+
   // Returns pack with 3 random cards
-  function getPack(){
+  function getPack () {
     const pack = [];
-    
-    for(let i = 0; i < 3; i++){
+
+    for (let i = 0; i < 3; i++) {
       let rarity = Math.random();
       let cardR = cardRarity(rarity);
       let card = getRandomCard(CARD_SELECTION[cardR]);
-      
+
       // Puts card in the pack
       pack.push({
         slot: i + 1,
@@ -161,20 +175,20 @@ function startGame () {
         card
       });
     }
-    
+
     return pack;
   }
 
   // sounds
 
   const SOUND_FILES = {
-    spin: "", 
-    reelStop: "", 
-    win: "sounds/money-soundfx.mp3", 
-    jackpot: "sounds/here-come-the-money-casinoze.mp3", 
+    spin: "",
+    reelStop: "",
+    win: "sounds/money-soundfx.mp3",
+    jackpot: "sounds/here-come-the-money-casinoze.mp3",
     lose: "sounds/downer_noise.mp3",
-    betUp: "", 
-    betDown: "", 
+    betUp: "",
+    betDown: "",
   };
 
   // load all sound files
@@ -365,7 +379,7 @@ function startGame () {
     add([sprite("pack"), pos(450, 300), anchor("center"), scale(0.45)]);
 
     makeButton("PLAY", 450, 490, 200, 50, rgb(236, 64, 160), () => {
-      startMusic(); 
+      startMusic();
       go("lobby");
     });
     makeMusicSwitch(790, 500);
@@ -404,12 +418,12 @@ function startGame () {
     const slotMachine = makeCabinet(130, "DUCK SLOTS", null, 0, rgb(40, 30, 100), () => go("slots"), "777");
     const tcgMachine = makeCabinet(340, "TCG Gacha", null, 0, rgb(50, 50, 60), () => go("tcg-gacha-scene"), "TCG");
     const clawMachine = makeCabinet(550, "Claw Machine", null, 0, rgb(50, 50, 60), () => go("claw-machine-scene"), "Claw");
-    const duckmanMachine = makeCabinet(760, "Duckman Machine", null, 0, rgb(50, 50, 60), () => go("duckman-machine-scene"), "duckman");
+    const duckmanMachine = makeCabinet(760, "Duckman Machine", null, 0, rgb(50, 50, 60), () => go("duckman-machine-scene"), "Duckman");
     const machines = [slotMachine, tcgMachine, clawMachine, duckmanMachine];
 
     // msg when duck is at machine
     const duck = makeDuck(450, 505);
-    let facing = "left"; 
+    let facing = "left";
     let currentAnim = "idle";
 
     function setAnim (name) {
@@ -510,6 +524,7 @@ function startGame () {
     updateHud();
 
     let spinning = false;
+
     function changeBet (direction) {
       if (spinning) return;
       const newIndex = clamp(betIndex + direction, 0, BET_STEPS.length - 1);
@@ -575,7 +590,7 @@ function startGame () {
         message.text = result.text;
         message.color = rgb(255, 90, 160);
       }
-      playSound(result.sound); 
+      playSound(result.sound);
 
       // if you are broke, here is a free refill
       if (coins < BET_STEPS[0]) {
@@ -603,13 +618,13 @@ function startGame () {
     let packSprite = null;
     let seenCards = [];
     let index = 0;
-    
+
     // Adds the coin text to the game
     const coinText = add([
       text("COINS:" + coins, {
-      size: 16
-    }),
-      pos(20, 20), 
+        size: 16
+      }),
+      pos(20, 20),
       color(255, 214, 102),
       z(100),
     ]);
@@ -629,7 +644,7 @@ function startGame () {
 
     const twist = machine.add([
       sprite("twist"),
-      pos(0,0),
+      pos(0, 0),
       //rotate(),
       anchor("center"),
     ]);
@@ -637,21 +652,21 @@ function startGame () {
     // Player presses enter to insert coin
     onButtonPress("enter", () => {
       // Starts the machine to spin and get pack
-      if(state === "idle"){
+      if (state === "idle") {
         // If player doesn't have enough coins, they cannot play
-        if(coins < 10){
+        if (coins < 10) {
           return;
         }
         coins -= 10;
         coinText.text = "COINS: " + coins;
         state = "spinning";
-        
+
         let timer = 0;
         const spinTime = 4;
 
         // Sounds of the capsules moving in the machine
         const shake = play("shake", {
-        volume: 0.7,
+          volume: 0.7,
         });
 
         // Animates machine to show capsule is being fetches
@@ -662,7 +677,7 @@ function startGame () {
           capsules.pos = vec2(rand(-2, 2), rand(-2, 2));
 
           // Checks if machine is done getting pack and stops animation
-          if(timer >= spinTime){
+          if (timer >= spinTime) {
             spin.cancel();
 
             twist.angle = 0;
@@ -676,27 +691,29 @@ function startGame () {
               scale(0.8),
               z(10),
             ]);
-            
+
             // Changes state to open pack
             state = "ready";
           }
         });
         return;
       }
-      
+
       // Player opens the pack and reveals the stack of cards
-      if (state === "ready"){
-        play("rip", {volume: 0.8});
-        
+      if (state === "ready") {
+        play("rip", {
+          volume: 0.8
+        });
+
         // Makes sure previous pack is gone
-        if(packSprite){
+        if (packSprite) {
           destroy(packSprite);
           packSprite = null;
         }
-        
+
         let pack = getPack();
-        
-        for(let i = 0; i < pack.length; i++){
+
+        for (let i = 0; i < pack.length; i++) {
           const card = add([
             sprite(pack[i].card),
             pos(center()),
@@ -707,47 +724,46 @@ function startGame () {
           card.hidden = i > index;
           seenCards.push(card);
         }
-        
+
         state = "reveal"
         return;
       }
-      
+
       // Go through each card to see what player got
-      if(state === "reveal"){
+      if (state === "reveal") {
         index += 1;
-        
-        if(index < seenCards.length){
-          for(let i = 0; i < seenCards.length; i++){
+
+        if (index < seenCards.length) {
+          for (let i = 0; i < seenCards.length; i++) {
             seenCards[i].hidden = i > index;
           }
-        }
-        else{
-          for(let i = 0; i < seenCards.length; i++){
+        } else {
+          for (let i = 0; i < seenCards.length; i++) {
             seenCards[i].pos = vec2(270 + i * 180, height() / 2);
           }
           state = "end";
         }
         return;
       }
-      
+
       // Resets pack and cards for next gacha
-      if(state === "end"){
-        for(let i = 0; i < seenCards.length; i++){
+      if (state === "end") {
+        for (let i = 0; i < seenCards.length; i++) {
           destroy(seenCards[i]);
         }
-        
+
         seenCards = [];
         index = 0;
         state = "idle";
       }
-      
+
     });
-    
+
     // Sends player back to lobby
     onButtonPress("back", () => {
       go("lobby");
     });
-    
+
   });
 
   // Claw Machine Scene
@@ -773,17 +789,19 @@ function startGame () {
     // rand placement of blind boxes
     for (let i = 0; i < 13; i++) {
       add([
-      sprite("claw_box"),
-      pos(rand(383, 557), FLOOR - rand(0,27)),
-      anchor("bot"),
-      scale(0.6),
-      area(),
-      "box"
-    ]);
-  }
+        sprite("claw_box"),
+        pos(rand(383, 557), FLOOR - rand(0, 27)),
+        anchor("bot"),
+        scale(0.6),
+        area(),
+        "box"
+      ]);
+    }
     // the claw of the machine, frame 0 = open, framw 1 = close
     const claw = add([
-      sprite("claw", {frame: 0}),
+      sprite("claw", {
+        frame: 0
+      }),
       pos(400, TOP),
       anchor("top"),
       scale(0.6),
@@ -811,7 +829,7 @@ function startGame () {
       }
     })
 
-    function release() {
+    function release () {
       dropped = grabbed; // remember picked box
       grabbed = null; // has not grabbed anything yet
       claw.frame = 0; // open the claw
@@ -825,7 +843,7 @@ function startGame () {
       if (mode === "down") {
         claw.move(0, SPEED);
         if (claw.pos.y >= BOTTOM) {
-          claw.frame = 1; 
+          claw.frame = 1;
           mode = "up";
         }
       } else if (mode === "up") {
@@ -878,212 +896,163 @@ function startGame () {
   });
   //scene("blind-box-reveal", () => {
   // });
+
+  scene("duckman-machine-scene", () => {
+    setGravity(1600);
+    const pipeOpen = 240;
+    const pipeMin = 60;
+    const jumpForce = 600;
+    const speed = 160;
+    const ceiling = -60;
+    
+    let score = 0;
+
+    // display score
+    const scoreLabel = add([
+      text(score.toString(), {
+        size: 45
+      }),
+      anchor("center"),
+      pos(width() / 2, 80),
+      fixed(),
+      z(1000),
+    ]);
+
+    function addScore () {
+      score++;
+      scoreLabel.text = score.toString();
+     
+    }
+    
+    //adds duck
+    const duck = add([
+      sprite("duck"),
+      pos(width() / 4, 0),
+      scale(0.95),
+      area({ isSensor: true}),
+      body(),
+    ]);
+
+    // check for fall 
+    duck.onUpdate(() => {
+      if (duck.pos.y >= height() || duck.pos.y <= ceiling) {
+        go("lose", score);
+      }
+    });
+
+    // jump 
+   onKeyPress("space", () => {
+     console.log("space pressed");
+     duck.jump(jumpForce);
+    });
+    
+    // calculate pipe positions
+    let prevPipeH1 = center().y - pipeOpen / 2;
+    
+    function spawnPipe () {
+        const h1 = prevPipeH1 = (() => {
+        const pipeMax = height() - pipeMin -  pipeOpen;
+        const low = Math.max(pipeMin, prevPipeH1 -  pipeOpen * 1.2);
+        const high = Math.min(pipeMax, prevPipeH1 +  pipeOpen * 1.2);
+        return rand(low, high);
+      })();
+      
+      const h2 = height() - h1 -  pipeOpen;
   
-scene("duckman-machine-scene", () => {
+      const makePipe = (posY, h) => [
+        pos(width(), posY),
+        rect(64, h),
+        color(0, 127, 255),
+        outline(4),
+        area({isSensor: true }),
+        move(LEFT, speed),
+        offscreen({ destroy: true}),
+        "pipe",
+      ];
 
-    // Background
-    const mazeScale = 0.8;
-    const mazeWidth = 608;
-    const mazeHeight = 672;
+      // add top pipe
+      add(makePipe(0, h1));
 
-    const mazeLeft = center().x - (mazeWidth * mazeScale) / 2;
-    const mazeTop = center().y - (mazeHeight * mazeScale) / 2;
+      // add bottom pipe
+      add([
+        ...makePipe(h1 + pipeOpen, h2),
+        {passed: false},
+      ]);
+    }
+
+    duck.onCollide("pipe", () => {
+      go("lose", score);
+    });
+
+  //score mechansim
+    onUpdate("pipe", (p) => {
+      if (p.pos.x + p.width <= duck.pos.x && p.passed === false) {
+        addScore();
+        p.passed = true;
+      }
+    });
+    
+     duck.onCollide("flower", (flower) => {
+        score += 2;
+        destroy(flower);
+        scoreLabel.text = score.toString();
+    });
+
+    // spawn pipe
+    loop(2, spawnPipe);
+    
+
+     // spawn flowers
+    loop(3.5, () => {
+    const x = width() + 24;
+     const y = rand(height() / 2 - 100, height() / 2 + 100);
 
     add([
-        sprite("duckman_bg"),
-        pos(center()),
-        anchor("center"),
-        scale(mazeScale),
-    ]);
-   
-//    //score
-//    let score = 0;    
-//   const scoreLabel = add([text(score), pos(24, 24)]);
-//    // increment score every frame
-// onUpdate(() => {
-//     score++;
-//     scoreLabel.text = score;
-// });d
-   
-    // Maze wall coordinates, i used AI to figure out the coordinates from a predrawn maze. [x, y, width, height]
-
-    const walls = [
-
-        // Top horizontal walls
-        [25, 24, 270, 5],
-        [313, 24, 270, 5],
-
-        // Outer walls
-        [25, 24, 5, 174],
-        [578, 24, 5, 174],
-
-        // Internal walls
-        [164, 132, 24, 150],
-        [420, 132, 24, 150],
-        [228, 132, 152, 24],
-        [292, 152, 24, 66],
-
-        // Center box
-        [228, 260, 152, 24],
-        [228, 324, 152, 24],
-        [228, 260, 24, 88],
-        [356, 260, 24, 88],
-
-        // Middle walls
-        [164, 324, 24, 88],
-        [420, 324, 24, 88],
-        [228, 388, 152, 24],
-        [292, 408, 24, 66],
-
-        // Bottom walls
-        [164, 452, 88, 24],
-        [356, 452, 88, 24],
-        [228, 516, 152, 24],
-        [292, 536, 24, 66],
-
-    ];
-
-     for (const [x, y, w, h] of walls) {
-        add([
-            rect(w * mazeScale, h * mazeScale),
-            pos(
-                mazeLeft + x * mazeScale,
-                mazeTop + y * mazeScale
-            ),
-            area(),
-            body({ isStatic: true }),
-            opacity(0.5),
-            "walls",
-        ]);
-    }
-   
-    // Duck
-    const SPEED = 200;
-  
-    const player = add([
-        sprite("duck"),
-        pos(
-            mazeLeft + 50 * mazeScale,
-            mazeTop + 100 * mazeScale
-        ),
+        sprite("flower"),
+        pos(x, y),
+        scale(0.4),
         anchor("center"),
         area(),
-        body(),
-        scale(0.7),
+        move(LEFT, speed),
+        offscreen({ destroy: true }),
+        "flower",
     ]);
 
-    let facing = "left";
-    let currentAnim = "idle";
-
-    function setAnim(name) {
-        if (currentAnim === name) return;
-        player.play(name);
-        currentAnim = name;
-    }
-
-    // Movement
-    onUpdate(() => {
-
-        let dx = 0;
-        let dy = 0;
-
-        if (isKeyDown("left") || isKeyDown("a")) dx = -1;
-        if (isKeyDown("right") || isKeyDown("d")) dx = 1;
-        if (isKeyDown("up") || isKeyDown("w")) dy = -1;
-        if (isKeyDown("down") || isKeyDown("s")) dy = 1;
-
-          player.pos.x = clamp(
-            player.pos.x,
-            mazeLeft + 30 * mazeScale,
-            mazeLeft + (mazeWidth - 30) * mazeScale
-        );
-        player.pos.y = clamp(
-            player.pos.y,
-            mazeTop + 30 * mazeScale,
-            mazeTop + (mazeHeight - 30) * mazeScale
-        );
-      
-        if (dx < 0) facing = "left";
-        if (dx > 0) facing = "right";
-
-        const moving = dx !== 0 || dy !== 0;
-      
-        if (moving) {
-            // move() respects collisions; unit() keeps diagonal speed equal
-            player.move(vec2(dx, dy).unit().scale(SPEED));
-        }
-        if (moving) {
-            player.flipX = false;
-            setAnim(facing);
-        } else {
-            setAnim("idle");
-            player.flipX = facing === "right";
-        }
-
+});
+    
     });
-   
-   player.onCollide("walls", () => {
-    shake();
-  });
-   
-   // //when game is lost
-   // scene("lose", (score) =>{
-   //  add([text("Game Over"), pos(center()), anchor("center")]);
-   
-   const TILE_WIDTH = 64;
-  const TILE_HEIGHT = TILE_WIDTH;
 
-// function createMazeMap(width, height) {
-//     const size = width * height;
-//     function getUnvisitedNeighbours(map, index) {
-//         const n = [];
-//         const x = Math.floor(index / width);
-//         if (x > 1 && map[index - 2] === 2) n.push(index - 2);
-//         if (x < width - 2 && map[index + 2] === 2) n.push(index + 2);
-//         if (index >= 2 * width && map[index - 2 * width] === 2) {
-//             n.push(index - 2 * width);
-//         }
-//         if (index < size - 2 * width && map[index + 2 * width] === 2) {
-//             n.push(index + 2 * width);
-//         }
-//         return n;
-//     }
-//     const map = new Array(size).fill(1, 0, size);
-//     map.forEach((_, index) => {
-//         const x = Math.floor(index / width);
-//         const y = Math.floor(index % width);
-//         if ((x & 1) === 1 && (y & 1) === 1) {
-//             map[index] = 2;
-//         }
-//     });
-  
-//     const stack = [];
-//     const startX = Math.floor(Math.random() * (width - 1)) | 1;
-//     const startY = Math.floor(Math.random() * (height - 1)) | 1;
-//     const start = startX + startY * width;
-//     map[start] = 0;
-//     stack.push(start);
-//     while (stack.length) {
-//         const index = stack.pop();
-//         const neighbours = getUnvisitedNeighbours(map, index);
-//         if (neighbours.length > 0) {
-//             stack.push(index);
-//             const neighbour =
-//                 neighbours[Math.floor(neighbours.length * Math.random())];
-//             const between = (index + neighbour) / 2;
-//             map[neighbour] = 0;
-//             map[between] = 0;
-//             stack.push(neighbour);
-//         }
-//     }
-//     return map;
-// }
+  scene("lose", (score) => {
+    add([
+      sprite("duck"),
+      pos(width() / 2, height() / 2 - 108),
+      scale(3),
+      anchor("center"),
+    ]);
 
+    // display score
+    add([
+      text(score),
+      pos(width() / 2, height() / 2 + 108),
+      scale(3),
+      anchor("center"),
+    ]);
 
-    // Back button
-    onButtonPress("back", () => go("lobby"));
-
+    //play again
+    add([
+      text("press space to play again, or escape to leave"),
+      pos(width() / 2, height() / 2 + 40),
+      scale(0.8),
+      anchor("center"),
+    ]);
+    
+      wait(0.2, () => {
+      onKeyPress("space", () => go("duckman-machine-scene"));
+      onKeyPress("escape", () => go("lobby"));
     });
-  
-  go("start");
-}
+
+  }); 
+
+  go("start"); 
+
+} 
