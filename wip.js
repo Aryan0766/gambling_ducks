@@ -962,7 +962,7 @@ function startGame () {
       const makePipe = (posY, h) => [
         pos(width(), posY),
         rect(64, h),
-        color(0, 127, 255),
+        color(75, 32, 94),
         outline(4),
         area({isSensor: true }),
         move(LEFT, speed),
